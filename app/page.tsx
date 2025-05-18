@@ -1,17 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Header } from "@/components/header";
 
 export default function MainPage() {
   return (
     <main>
-      <Button
-        onClick={() => {
-          alert("Hello!");
-        }}
-      >
-        Click
-      </Button>
+      <Header />
     </main>
   );
 }
