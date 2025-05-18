@@ -65,21 +65,23 @@ export function Header() {
     <motion.header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-background/90 backdrop-blur-md border-b"
+          ? "bg-background/90 backdrop-blur-md border-b border-border"
           : "bg-transparent"
       }`}
       initial="initial"
       animate="animate"
       variants={headerVariants}
     >
-      <div className="container mx-auto flex items-center justify-between h-16 px-5 md:px-10">
+      <div className="container mx-auto px-5 md:px-10 flex items-center justify-between h-16">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold gradient-text">MEDIA TEAM</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary/90 via-primary to-primary/60 bg-clip-text text-transparent">
+              MEDIA TEAM
+            </span>
           </Link>
         </motion.div>
         <nav className="hidden md:flex items-center space-x-6">
@@ -93,7 +95,7 @@ export function Header() {
             >
               <Link
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors relative group"
+                className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors relative group"
               >
                 {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
@@ -110,7 +112,7 @@ export function Header() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="w-[250px] sm:w-[300px]"
+            className="w-[250px] sm:w-[300px] !bg-card"
             aria-label="Navigation menu"
           >
             <SheetTitle className="sr-only">MEDIA TEAM</SheetTitle>
@@ -119,7 +121,7 @@ export function Header() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors"
                 >
                   {item.name}
                 </Link>
