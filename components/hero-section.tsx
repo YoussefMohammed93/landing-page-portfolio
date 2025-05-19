@@ -3,17 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import {
-  motion,
-  useInView,
-  useScroll,
-  useTransform,
-  useReducedMotion,
-} from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAnimation } from "./animation-provider";
 import { useRef, useState, useEffect } from "react";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 
 export function HeroSection() {
   const { prefersReducedMotion } = useAnimation();
@@ -21,13 +15,26 @@ export function HeroSection() {
   const textRef = useRef<HTMLDivElement>(null);
 
   const [isMobile, setIsMobile] = useState(false);
+  const [isLowEndDevice, setIsLowEndDevice] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
+    const checkIfLowEndDevice = () => {
+      const hasLowCPU =
+        typeof navigator !== "undefined" &&
+        navigator.hardwareConcurrency !== undefined &&
+        navigator.hardwareConcurrency <= 2;
+
+      setIsLowEndDevice(hasLowCPU === true);
+    };
+
     checkIfMobile();
+    checkIfLowEndDevice();
 
     window.addEventListener("resize", checkIfMobile);
 
@@ -39,26 +46,11 @@ export function HeroSection() {
     amount: isMobile ? 0.1 : 0.3,
   });
 
-  const shouldReduceAnimations = prefersReducedMotion;
+  const shouldReduceAnimations = prefersReducedMotion || isLowEndDevice;
   const shouldUseReducedAnimations =
     useReducedMotion() || shouldReduceAnimations;
 
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-
-  const parallaxStrength = shouldReduceAnimations ? 0.5 : 1;
-  const backgroundY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", `${20 * parallaxStrength}%`]
-  );
-  const contentY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", `${5 * parallaxStrength}%`]
-  );
+  const shouldDisableAnimations = isLowEndDevice;
 
   const getAnimationDuration = (baseDuration: number) =>
     shouldReduceAnimations ? baseDuration * 0.6 : baseDuration;
@@ -118,48 +110,16 @@ export function HeroSection() {
       ref={sectionRef}
       className="relative py-20 md:py-28 overflow-hidden bg-grid"
     >
-      <motion.div
-        className="absolute inset-0 z-0 opacity-40"
-        style={{ y: shouldUseReducedAnimations ? 0 : backgroundY }}
-      >
+      <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/20 via-primary/10 to-background"></div>
-        {!shouldReduceAnimations && (
-          <>
-            <motion.div
-              className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full"
-              animate={{
-                x: [0, 20, 0],
-                y: [0, 15, 0],
-              }}
-              transition={{
-                duration: isMobile ? 20 : 15,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
-              }}
-            ></motion.div>
-            <motion.div
-              className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full"
-              animate={{
-                x: [0, -20, 0],
-                y: [0, -15, 0],
-              }}
-              transition={{
-                duration: isMobile ? 24 : 18,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
-              }}
-            ></motion.div>
-          </>
-        )}
-        {shouldReduceAnimations && (
-          <div className="absolute inset-0 bg-primary/10 opacity-50"></div>
-        )}
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full opacity-70"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full opacity-70"></div>
         {!isMobile && !shouldReduceAnimations && (
           <motion.div
             className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/10 blur-2xl rounded-full"
             animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0.7, 0.5],
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 0.6, 0.5],
             }}
             transition={{
               duration: 8,
@@ -168,11 +128,8 @@ export function HeroSection() {
             }}
           ></motion.div>
         )}
-      </motion.div>
-      <motion.div
-        className="container relative z-10 mx-auto px-5 md:px-10"
-        style={{ y: shouldUseReducedAnimations ? 0 : contentY }}
-      >
+      </div>
+      <div className="container relative z-10 mx-auto px-5 md:px-10">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
           <motion.div
             ref={textRef}
@@ -283,6 +240,9 @@ export function HeroSection() {
                       width={32}
                       height={32}
                       className="object-cover"
+                      loading="lazy"
+                      sizes="32px"
+                      quality={75}
                     />
                   </div>
                 ))}
@@ -308,34 +268,54 @@ export function HeroSection() {
               height={550}
               className="rounded-2xl object-cover h-full w-full shadow-xl shadow-primary/10"
               priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+              quality={90}
             />
-            <motion.div
-              className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg"
-              initial={{ opacity: 0, y: shouldReduceAnimations ? 10 : 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: shouldReduceAnimations ? 0.5 : 1,
-                duration: shouldReduceAnimations ? 0.3 : 0.5,
-                ease: shouldReduceAnimations ? "easeOut" : "easeInOut",
-              }}
-            >
-              <div className="flex items-center gap-2">
-                <div className="bg-primary/20 p-2 rounded-lg">
-                  <Star className="h-4 w-4 text-primary fill-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    Trusted by 50+ brands worldwide
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Delivering exceptional content since 2024
-                  </p>
+            {shouldDisableAnimations ? (
+              <div className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/20 p-2 rounded-lg">
+                    <Star className="h-4 w-4 text-primary fill-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Trusted by 50+ brands worldwide
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Delivering exceptional content since 2024
+                    </p>
+                  </div>
                 </div>
               </div>
-            </motion.div>
+            ) : (
+              <motion.div
+                className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg"
+                initial={{ opacity: 0, y: shouldReduceAnimations ? 10 : 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: shouldReduceAnimations ? 0.5 : 1,
+                  duration: shouldReduceAnimations ? 0.3 : 0.5,
+                  ease: shouldReduceAnimations ? "easeOut" : "easeInOut",
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/20 p-2 rounded-lg">
+                    <Star className="h-4 w-4 text-primary fill-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Trusted by 50+ brands worldwide
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Delivering exceptional content since 2024
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

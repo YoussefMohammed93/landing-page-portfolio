@@ -16,14 +16,34 @@ import { useSmoothScroll } from "@/hooks/use-smooth-scroll";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   useSmoothScroll();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, []);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 10);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -42,8 +62,8 @@ export function Header() {
       y: 0,
       opacity: 1,
       transition: {
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1.0],
+        duration: isMobile ? 0.3 : 0.5,
+        ease: isMobile ? "easeOut" : [0.25, 0.1, 0.25, 1.0],
       },
     },
   };
@@ -54,9 +74,9 @@ export function Header() {
       opacity: 1,
       y: 0,
       transition: {
-        delay: 0.1 + i * 0.1,
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1.0],
+        delay: isMobile ? 0.05 + i * 0.05 : 0.1 + i * 0.1,
+        duration: isMobile ? 0.3 : 0.5,
+        ease: isMobile ? "easeOut" : [0.25, 0.1, 0.25, 1.0],
       },
     }),
   };
@@ -71,12 +91,19 @@ export function Header() {
       initial="initial"
       animate="animate"
       variants={headerVariants}
+      style={{
+        willChange: "transform, opacity",
+      }}
     >
       <div className="container mx-auto px-5 md:px-10 flex items-center justify-between h-16">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: isMobile ? -10 : -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{
+            duration: isMobile ? 0.3 : 0.5,
+            delay: isMobile ? 0.1 : 0.2,
+            ease: isMobile ? "easeOut" : "easeInOut",
+          }}
         >
           <Link href="/" className="flex items-center">
             <span className="text-xl font-bold bg-gradient-to-r from-primary/90 via-primary to-primary/60 bg-clip-text text-transparent">
