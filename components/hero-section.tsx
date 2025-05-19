@@ -154,7 +154,7 @@ export function HeroSection() {
                     Captivates
                   </span>
                   <motion.span
-                    className="absolute -right-6 top-3 text-primary"
+                    className="hidden md:block absolute -right-6 top-3 text-primary"
                     animate={{ rotate: [0, 15, 0] }}
                     transition={{
                       duration: shouldReduceAnimations ? 7 : 5,
@@ -193,6 +193,7 @@ export function HeroSection() {
                           repeat: Number.POSITIVE_INFINITY,
                           repeatType: "reverse",
                         }}
+                        className="hidden md:block"
                       >
                         <ArrowRight className="h-4 w-4" />
                       </motion.span>
@@ -229,23 +230,42 @@ export function HeroSection() {
               }
             >
               <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full border-2 border-background overflow-hidden"
-                  >
-                    <Image
-                      src="/avatar-placeholder.png"
-                      alt={`Avatar ${i}`}
-                      width={32}
-                      height={32}
-                      className="object-cover"
-                      loading="lazy"
-                      sizes="32px"
-                      quality={50}
-                    />
-                  </div>
-                ))}
+                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
+                  <Image
+                    src="/avatar-placeholder.png"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                    loading="lazy"
+                    sizes="32px"
+                    quality={50}
+                  />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
+                  <Image
+                    src="/avatar-placeholder.png"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                    loading="lazy"
+                    sizes="32px"
+                    quality={50}
+                  />
+                </div>
+                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
+                  <Image
+                    src="/avatar-placeholder.png"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                    loading="lazy"
+                    sizes="32px"
+                    quality={50}
+                  />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">50+ brands</span>{" "}
