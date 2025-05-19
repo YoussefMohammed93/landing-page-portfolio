@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import HeaderBackground from "./header-background";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
@@ -97,7 +97,7 @@ function useActiveSection(sections: Array<{ id: string }>, offset = 100) {
 export default function Navigation() {
   const headerRef = useRef<HTMLElement>(null);
 
-  const [scrollY, setScrollY] = useState(0);
+  const [, setScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -217,15 +217,21 @@ export default function Navigation() {
       role="banner"
       aria-label="Main navigation"
     >
-      <HeaderBackground scrollY={scrollY} />
       <div className="container mx-auto px-5 md:px-10 flex items-center justify-between">
         <motion.div initial="initial" animate="animate" variants={logoVariants}>
           <Link
             href="/"
             aria-label="Go to home page"
-            className="text-2xl sm:text-3xl font-bold tracking-tighter"
+            className="flex items-center"
           >
-            MEDIA<span className="text-primary"> TEAM</span>
+            <Image
+              src="/logo.png"
+              alt="Media Team Logo"
+              width={36}
+              height={36}
+              className="h-auto w-auto"
+              priority
+            />
           </Link>
         </motion.div>
         <nav
