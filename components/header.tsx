@@ -1,71 +1,160 @@
 "use client";
 
 import Link from "next/link";
+import HeaderBackground from "./header-background";
 
-import {
-  Sheet,
-  SheetTitle,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSmoothScroll } from "@/hooks/use-smooth-scroll";
+import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
-export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  useSmoothScroll();
+function throttle<T extends (...args: unknown[]) => unknown>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let inThrottle: boolean = false;
+  return function (this: unknown, ...args: Parameters<T>): void {
+    if (!inThrottle) {
+      func.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
+function useActiveSection(sections: Array<{ id: string }>, offset = 100) {
+  const [activeSection, setActiveSection] = useState("hero");
+  const [isProjectsPage, setIsProjectsPage] = useState(false);
 
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-
-    return () => window.removeEventListener("resize", checkIfMobile);
+    if (typeof window !== "undefined") {
+      const pathname = window.location.pathname;
+      setIsProjectsPage(pathname.startsWith("/projects"));
+    }
   }, []);
 
   useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 10);
-          ticking = false;
-        });
-        ticking = true;
+    const handleScroll = throttle(() => {
+      if (isProjectsPage) {
+        return;
       }
-    };
+
+      const viewportHeight = window.innerHeight;
+      let currentSection = "hero";
+      let maxVisibleArea = 0;
+
+      for (const section of sections) {
+        const element = document.getElementById(section.id);
+        if (!element) {
+          console.warn(`Element with id ${section.id} not found`);
+          continue;
+        }
+
+        const { offsetTop, offsetHeight } = element;
+        const elementBottom = offsetTop + offsetHeight;
+
+        const visibleTop = Math.max(offsetTop, window.scrollY);
+        const visibleBottom = Math.min(
+          elementBottom,
+          window.scrollY + viewportHeight
+        );
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+        const visiblePercentage = (visibleHeight / offsetHeight) * 100;
+
+        if (section.id === "timeline" && visiblePercentage > 30) {
+          currentSection = "timeline";
+          break;
+        }
+
+        if (section.id === "services" && visiblePercentage > 25) {
+          currentSection = "services";
+          break;
+        }
+
+        if (visiblePercentage > maxVisibleArea) {
+          maxVisibleArea = visiblePercentage;
+          currentSection = section.id;
+        }
+      }
+
+      if (currentSection !== activeSection) {
+        console.log(`Setting active section to: ${currentSection}`);
+        setActiveSection(currentSection);
+      }
+    }, 100);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [sections, offset, activeSection, isProjectsPage]);
+
+  return { activeSection, isProjectsPage };
+}
+
+export default function Navigation() {
+  const headerRef = useRef<HTMLElement>(null);
+
+  const [scrollY, setScrollY] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    {
+      name: "Home",
+      href: "#hero",
+      id: "hero",
+      ariaLabel: "Navigate to home section",
+    },
+    {
+      name: "Video Editing",
+      href: "#video-editing",
+      id: "video-editing",
+      ariaLabel: "Navigate to video editing section",
+    },
+    {
+      name: "2D Animations",
+      href: "#2d-animations",
+      id: "2d-animations",
+      ariaLabel: "Navigate to 2d animations section",
+    },
+    {
+      name: "3D Animations",
+      href: "#3d-animations",
+      id: "3d-animations",
+      ariaLabel: "Navigate to 3d animations section",
+    },
+    {
+      name: "Music",
+      href: "#music",
+      id: "music",
+      ariaLabel: "Navigate to music section",
+    },
+    {
+      name: "Contact Us",
+      href: "#contact",
+      id: "contact",
+      ariaLabel: "Navigate to contact section",
+    },
+  ];
+
+  const { activeSection, isProjectsPage } = useActiveSection(navLinks, 150);
+
+  useEffect(() => {
+    const handleScroll = throttle(() => {
+      setIsScrolled(window.scrollY > 10);
+      setScrollY(window.scrollY / window.innerHeight);
+    }, 50);
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "Video Editing", href: "#video" },
-    { name: "2D Animations", href: "#2d" },
-    { name: "3D Animations", href: "#3d" },
-    { name: "Music", href: "#music" },
-    { name: "Contact", href: "#contact" },
-  ];
-
-  const headerVariants = {
-    initial: { y: -100, opacity: 0 },
-    animate: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: isMobile ? 0.3 : 0.5,
-        ease: isMobile ? "easeOut" : [0.25, 0.1, 0.25, 1.0],
-      },
-    },
+  const logoVariants = {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0, transition: { duration: 0.3 } },
   };
 
   const navItemVariants = {
@@ -74,89 +163,254 @@ export function Header() {
       opacity: 1,
       y: 0,
       transition: {
-        delay: isMobile ? 0.05 + i * 0.05 : 0.1 + i * 0.1,
-        duration: isMobile ? 0.3 : 0.5,
-        ease: isMobile ? "easeOut" : [0.25, 0.1, 0.25, 1.0],
+        duration: 0.3,
+        delay: 0.05 * i,
       },
     }),
   };
 
+  const mobileMenuVariants = {
+    closed: {
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.2,
+        ease: "easeInOut",
+        when: "afterChildren",
+        staggerChildren: 0.03,
+        staggerDirection: -1,
+      },
+    },
+    open: {
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+        when: "beforeChildren",
+        staggerChildren: 0.05,
+        delayChildren: 0.05,
+      },
+    },
+  };
+
+  const mobileNavItemVariants = {
+    closed: { opacity: 0, x: -10 },
+    open: { opacity: 1, x: 0 },
+  };
+
+  const themeToggleVariants = {
+    initial: { scale: 0.8, opacity: 0 },
+    animate: { scale: 1, opacity: 1, transition: { duration: 0.2 } },
+    whileTap: { scale: 0.9 },
+  };
+
   return (
-    <motion.header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+    <header
+      ref={headerRef}
+      className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-300 overflow-hidden",
         isScrolled
-          ? "bg-background/90 backdrop-blur-md border-b border-border"
-          : "bg-transparent"
-      }`}
-      initial="initial"
-      animate="animate"
-      variants={headerVariants}
-      style={{
-        willChange: "transform, opacity",
-      }}
+          ? "bg-background/75 backdrop-blur-md border-b border-border/50 py-3"
+          : "bg-background/30 backdrop-blur-sm py-5"
+      )}
+      role="banner"
+      aria-label="Main navigation"
     >
-      <div className="container mx-auto px-5 md:px-10 flex items-center justify-between h-16">
-        <motion.div
-          initial={{ opacity: 0, x: isMobile ? -10 : -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{
-            duration: isMobile ? 0.3 : 0.5,
-            delay: isMobile ? 0.1 : 0.2,
-            ease: isMobile ? "easeOut" : "easeInOut",
-          }}
-        >
-          <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold md:bg-gradient-to-r md:from-primary/90 md:via-primary md:to-primary/60 md:bg-clip-text md:text-transparent">
-              MEDIA TEAM
-            </span>
+      <HeaderBackground scrollY={scrollY} />
+      <div className="container mx-auto px-5 md:px-10 flex items-center justify-between">
+        <motion.div initial="initial" animate="animate" variants={logoVariants}>
+          <Link
+            href="/"
+            aria-label="Go to home page"
+            className="text-2xl sm:text-3xl font-bold tracking-tighter"
+          >
+            MEDIA<span className="text-primary"> TEAM</span>
           </Link>
         </motion.div>
-        <nav className="hidden md:flex items-center space-x-6">
-          {navItems.map((item, i) => (
+        <nav
+          className="hidden md:flex items-center space-x-5"
+          aria-label="Main navigation"
+        >
+          {navLinks.map((link, i) => (
             <motion.div
-              key={item.name}
+              key={link.name}
               custom={i}
               initial="initial"
               animate="animate"
               variants={navItemVariants}
+              className="relative"
             >
               <Link
-                href={item.href}
-                className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors relative group"
+                href={isProjectsPage ? `/${link.href}` : link.href}
+                className={cn(
+                  "text-sm sm:text-base font-medium transition-all px-1 pt-2 pb-1 relative group",
+                  link.id === "hero" && isProjectsPage
+                    ? "hover:text-primary"
+                    : activeSection === link.id
+                    ? "text-primary"
+                    : "hover:text-primary"
+                )}
+                aria-label={link.ariaLabel}
+                aria-current={activeSection === link.id ? "page" : undefined}
               >
-                {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                <span className="relative z-10">{link.name}</span>
+                <motion.span
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-primary/20 rounded-full"
+                  initial={{ width: 0 }}
+                  whileHover={{ width: "100%" }}
+                  transition={{ duration: 0.2 }}
+                />
+                {activeSection === link.id &&
+                  !(link.id === "hero" && isProjectsPage) && (
+                    <motion.div
+                      layoutId="activeSection"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full"
+                      initial={{ opacity: 0, width: "30%" }}
+                      animate={{ opacity: 1, width: "100%" }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  )}
               </Link>
             </motion.div>
           ))}
         </nav>
-        <Sheet>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="right"
-            className="w-[250px] sm:w-[300px] !bg-card"
-            aria-label="Navigation menu"
+        <div className="flex items-center md:hidden">
+          <motion.div
+            initial="initial"
+            animate="animate"
+            whileTap="whileTap"
+            variants={themeToggleVariants}
+          ></motion.div>
+          <motion.div
+            initial="initial"
+            animate="animate"
+            whileTap="whileTap"
+            variants={themeToggleVariants}
           >
-            <SheetTitle className="sr-only">MEDIA TEAM</SheetTitle>
-            <nav className="flex flex-col gap-5 mt-10 pl-5">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
+              className="relative group"
+            >
+              <motion.div
+                className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                initial={{ scale: 0.8 }}
+                whileHover={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              />
+              <AnimatePresence mode="wait">
+                {isMobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                    transition={{
+                      duration: 0.2,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                    }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <X className="h-6 w-6 text-primary" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="menu"
+                    initial={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                    transition={{
+                      duration: 0.2,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                    }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <Menu className="h-6 w-6" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </Button>
+          </motion.div>
+        </div>
       </div>
-    </motion.header>
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.nav
+            id="mobile-menu"
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={mobileMenuVariants}
+            className="md:hidden bg-background/80 backdrop-blur-md border-b border-border/40"
+            aria-label="Mobile navigation"
+          >
+            <div className="container mx-auto px-4 py-4 flex flex-col space-y-1 border-b">
+              {navLinks.map((link) => (
+                <motion.div
+                  key={link.name}
+                  variants={mobileNavItemVariants}
+                  className="overflow-hidden"
+                >
+                  <Link
+                    href={isProjectsPage ? `/${link.href}` : link.href}
+                    className={cn(
+                      "flex items-center text-sm font-medium py-3 px-3 rounded-md transition-all relative overflow-hidden",
+                      link.id === "hero" && isProjectsPage
+                        ? "hover:bg-primary/5"
+                        : activeSection === link.id
+                        ? "bg-primary/10 text-primary"
+                        : "hover:bg-primary/5"
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    aria-label={link.ariaLabel}
+                    aria-current={
+                      activeSection === link.id ? "page" : undefined
+                    }
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-primary/5 -z-10"
+                      initial={{ x: "-100%" }}
+                      whileHover={{ x: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      className="flex items-center"
+                      initial={{ x: -10, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {link.name}
+                      {activeSection === link.id &&
+                        !(link.id === "hero" && isProjectsPage) && (
+                          <motion.div
+                            layoutId="activeMobileSection"
+                            className="ml-2 h-2 w-2 rounded-full bg-primary"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 20,
+                            }}
+                          />
+                        )}
+                    </motion.div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </header>
   );
 }

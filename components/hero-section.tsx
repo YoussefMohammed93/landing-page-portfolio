@@ -108,7 +108,7 @@ export function HeroSection() {
     <section
       id="home"
       ref={sectionRef}
-      className="relative py-20 md:py-28 overflow-hidden bg-grid"
+      className="relative pt-32 md:pt-28 pb-20 overflow-hidden bg-grid"
     >
       <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/20 via-primary/10 to-background"></div>
