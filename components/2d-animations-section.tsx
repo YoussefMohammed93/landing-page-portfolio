@@ -66,7 +66,7 @@ export function TwoDAnimationsSection() {
               <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-l from-transparent via-primary/40 to-primary"></div>
             </div>
           </h2>
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
             We create eye-catching 2D animations that bring your ideas to life
             with vibrant motion graphics and character animations for all
             digital platforms.
