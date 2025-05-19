@@ -229,7 +229,7 @@ export function HeroSection() {
               }
             >
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
+                {[1, 2, 3].map((i) => (
                   <div
                     key={i}
                     className="w-8 h-8 rounded-full border-2 border-background overflow-hidden"
@@ -242,7 +242,7 @@ export function HeroSection() {
                       className="object-cover"
                       loading="lazy"
                       sizes="32px"
-                      quality={75}
+                      quality={50}
                     />
                   </div>
                 ))}

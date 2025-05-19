@@ -106,7 +106,7 @@ export function Header() {
           }}
         >
           <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary/90 via-primary to-primary/60 bg-clip-text text-transparent">
+            <span className="text-xl font-bold md:bg-gradient-to-r md:from-primary/90 md:via-primary md:to-primary/60 md:bg-clip-text md:text-transparent">
               MEDIA TEAM
             </span>
           </Link>

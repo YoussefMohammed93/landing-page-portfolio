@@ -89,16 +89,18 @@
   @apply bg-gradient-to-r from-primary/90 via-primary to-primary/90 bg-clip-text text-transparent;
 }
 
-.bg-grid {
-  background-image: linear-gradient(
-      to right,
-      hsl(from var(--primary) h s calc(l * 0.8) / 0.1) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      hsl(from var(--primary) h s calc(l * 0.8) / 0.1) 1px,
-      transparent 1px
-    );
-  background-size: 32px 32px;
+@media (min-width: 768px) {
+  .bg-grid {
+    background-image: linear-gradient(
+        to right,
+        hsl(from var(--primary) h s calc(l * 0.8) / 0.1) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        hsl(from var(--primary) h s calc(l * 0.8) / 0.1) 1px,
+        transparent 1px
+      );
+    background-size: 32px 32px;
+  }
 }
