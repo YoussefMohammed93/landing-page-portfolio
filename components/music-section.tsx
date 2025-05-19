@@ -80,7 +80,7 @@ export function MusicSection() {
             experience for your audience
           </p>
         </div>
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <StaggeredChildren
             className="space-y-4"
             animation="slideUp"
@@ -89,7 +89,7 @@ export function MusicSection() {
             {audioTracks.map((track) => (
               <Card
                 key={track.id}
-                className={`transition-all ${
+                className={`transition-all bg-muted/30 ${
                   activeTrack === track.id ? "border-primary" : "border-border"
                 } hover:border-primary/50`}
               >
@@ -163,9 +163,18 @@ export function MusicSection() {
               </Card>
             ))}
           </StaggeredChildren>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl">
-            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center">
-              <div className="bg-primary/20 inline-flex p-3 rounded-full mb-4">
+          <StaggeredChildren
+            className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-5"
+            animation="slideUp"
+            staggerAmount={0.1}
+            duration={0.4}
+          >
+            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+              <motion.div
+                className="bg-primary/20 inline-flex p-3 rounded-full mb-4"
+                whileHover={{ scale: 1.05, rotate: 15 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6 text-primary"
@@ -180,15 +189,19 @@ export function MusicSection() {
                     d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
                   />
                 </svg>
-              </div>
+              </motion.div>
               <h3 className="text-lg font-semibold mb-2">Custom Composition</h3>
               <p className="text-foreground/70 text-sm">
                 Original music tailored specifically for your brand and project
                 needs
               </p>
             </div>
-            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center">
-              <div className="bg-primary/20 inline-flex p-3 rounded-full mb-4">
+            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+              <motion.div
+                className="bg-primary/20 inline-flex p-3 rounded-full mb-4"
+                whileHover={{ scale: 1.05, rotate: 15 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6 text-primary"
@@ -203,15 +216,19 @@ export function MusicSection() {
                     d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m12.728 0l-3.536-3.536a5 5 0 00-7.072 0L5.586 8.464"
                   />
                 </svg>
-              </div>
+              </motion.div>
               <h3 className="text-lg font-semibold mb-2">Sound Effects</h3>
               <p className="text-foreground/70 text-sm">
                 Professionally crafted sound effects to enhance visual elements
                 and interactions
               </p>
             </div>
-            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center">
-              <div className="bg-primary/20 inline-flex p-3 rounded-full mb-4">
+            <div className="bg-muted/30 border border-border/40 rounded-lg p-6 text-center transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5">
+              <motion.div
+                className="bg-primary/20 inline-flex p-3 rounded-full mb-4"
+                whileHover={{ scale: 1.05, rotate: 15 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6 text-primary"
@@ -226,14 +243,14 @@ export function MusicSection() {
                     d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"
                   />
                 </svg>
-              </div>
+              </motion.div>
               <h3 className="text-lg font-semibold mb-2">Voice Over</h3>
               <p className="text-foreground/70 text-sm">
                 Professional voice talent and audio recording for narration and
                 dialogue
               </p>
             </div>
-          </div>
+          </StaggeredChildren>
           <motion.div
             className="mt-12 text-center"
             initial={{ opacity: 0, y: 20 }}
