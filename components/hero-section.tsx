@@ -108,7 +108,7 @@ export function HeroSection() {
     <section
       id="home"
       ref={sectionRef}
-      className="relative pt-32 md:pt-28 pb-20 overflow-hidden bg-grid"
+      className="relative pt-32 md:pt-28 pb-16 md:pb-20 overflow-hidden bg-grid"
     >
       <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/20 via-primary/10 to-background"></div>
@@ -129,7 +129,7 @@ export function HeroSection() {
           ></motion.div>
         )}
       </div>
-      <div className="container relative z-10 mx-auto px-5 md:px-10">
+      <div className="max-w-[1360px] relative z-10 mx-auto px-5 md:px-10">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
           <motion.div
             ref={textRef}
@@ -144,7 +144,7 @@ export function HeroSection() {
               className="space-y-4"
               variants={shouldUseReducedAnimations ? {} : itemVariants}
             >
-              <h1 className="text-3xl md:text-4xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]">
+              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
                 Social Media Content That{" "}
                 <motion.span
                   className="relative inline-block"
@@ -269,7 +269,7 @@ export function HeroSection() {
               </div>
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">50+ brands</span>{" "}
-                trust our creative team
+                trust our creative team.
               </p>
             </motion.div>
           </motion.div>
@@ -280,13 +280,12 @@ export function HeroSection() {
             variants={shouldUseReducedAnimations ? {} : imageVariants}
             viewport={{ once: true }}
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent rounded-2xl -rotate-1"></div>
             <Image
-              src="/placeholder.svg?height=550&width=650"
+              src="/hero.svg?height=550&width=650"
               alt="Social Media Content Creation"
               width={650}
               height={550}
-              className="object-cover h-full w-full shadow-xl shadow-primary/10"
+              className="object-cover h-full w-full"
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
               quality={90}
@@ -319,7 +318,7 @@ export function HeroSection() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="bg-primary/20 p-2 rounded-lg">
+                  <div className="bg-primary/20 p-2.5 rounded-full">
                     <Star className="h-4 w-4 text-primary fill-primary" />
                   </div>
                   <div>

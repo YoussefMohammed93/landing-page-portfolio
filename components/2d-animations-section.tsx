@@ -11,32 +11,32 @@ import { AnimatedSection } from "./animated-section";
 import { StaggeredChildren } from "./staggered-children";
 import { Card, CardContent } from "@/components/ui/card";
 
-export function VideoSection() {
+export function TwoDAnimationsSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
     id: number;
     title: string;
     videoSrc: string;
   } | null>(null);
 
-  const videoProjects = [
+  const animationProjects = [
     {
       id: 1,
-      title: "Brand Campaign",
-      description: "TikTok viral campaign for fashion",
+      title: "Character Animation",
+      description: "Animated brand mascot for social media campaign",
       thumbnail: "/placeholder.svg?height=300&width=500",
       videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     },
     {
       id: 2,
-      title: "Product Launch",
-      description: "Instagram Reels for tech product launch",
+      title: "Motion Graphics",
+      description: "Explainer animation for tech product features",
       thumbnail: "/placeholder.svg?height=300&width=500",
       videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     },
     {
       id: 3,
-      title: "Lifestyle Content",
-      description: "YouTube shorts for travel influencer",
+      title: "Animated Infographics",
+      description: "Data visualization for corporate presentation",
       thumbnail: "/placeholder.svg?height=300&width=500",
       videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
     },
@@ -44,7 +44,7 @@ export function VideoSection() {
 
   return (
     <AnimatedSection
-      id="video-editing"
+      id="2d-animations"
       className="py-16 md:py-20 bg-gradient-to-b from-background via-background/98 to-background/95 relative overflow-hidden"
     >
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
@@ -59,7 +59,7 @@ export function VideoSection() {
               <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
               <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
             </div>
-            <span className="text-gradient">Captivating</span> Video Editing
+            <span className="text-gradient">Stunning</span> 2D Animations
             <div className="hidden md:flex items-center mt-2">
               <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>
@@ -67,8 +67,9 @@ export function VideoSection() {
             </div>
           </h2>
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-            We transform raw footage into engaging stories that resonate with
-            your audience across all social media platforms.
+            We create eye-catching 2D animations that bring your ideas to life
+            with vibrant motion graphics and character animations for all
+            digital platforms.
           </p>
         </div>
         <StaggeredChildren
@@ -77,7 +78,7 @@ export function VideoSection() {
           staggerAmount={0.1}
           duration={0.4}
         >
-          {videoProjects.map((project) => (
+          {animationProjects.map((project) => (
             <Card
               key={project.id}
               className={cn(
@@ -124,7 +125,9 @@ export function VideoSection() {
         <div className="mt-12 md:mt-16 text-center">
           <Button variant="outline" size="lg" className="w-full sm:w-auto">
             <Film className="h-4 w-4" />
-            <span className="relative z-10">View All Video Projects</span>
+            <span className="relative z-10">
+              View All 2D Animation Projects
+            </span>
           </Button>
         </div>
       </div>

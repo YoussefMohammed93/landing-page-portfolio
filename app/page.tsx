@@ -4,6 +4,7 @@ import Header from "@/components/header";
 
 import { HeroSection } from "@/components/hero-section";
 import { VideoSection } from "@/components/video-section";
+import { TwoDAnimationsSection } from "@/components/2d-animations-section";
 
 export default function MainPage() {
   return (
@@ -11,6 +12,7 @@ export default function MainPage() {
       <Header />
       <HeroSection />
       <VideoSection />
+      <TwoDAnimationsSection />
     </main>
   );
 }

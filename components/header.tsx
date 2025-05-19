@@ -217,7 +217,7 @@ export default function Navigation() {
       role="banner"
       aria-label="Main navigation"
     >
-      <div className="container mx-auto px-5 md:px-10 flex items-center justify-between">
+      <div className="max-w-[1360px] mx-auto px-5 md:px-10 flex items-center justify-between">
         <motion.div initial="initial" animate="animate" variants={logoVariants}>
           <Link
             href="/"
