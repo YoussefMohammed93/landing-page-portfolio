@@ -45,7 +45,7 @@ export function ThreeDAnimationsSection() {
   return (
     <AnimatedSection
       id="3d-animations"
-      className="py-16 md:py-20 bg-gradient-to-b from-background via-background/98 to-background/95 relative overflow-hidden"
+      className="py-10 md:py-12 bg-gradient-to-b from-background via-background/98 to-background/95 relative overflow-hidden"
     >
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary/10 blur-3xl rounded-full"></div>
@@ -68,7 +68,8 @@ export function ThreeDAnimationsSection() {
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
             We create photorealistic 3D animations and models that transform
-            your concepts into immersive experiences with depth, across all platforms.
+            your concepts into immersive experiences with depth, across all
+            platforms.
           </p>
         </div>
         <StaggeredChildren
