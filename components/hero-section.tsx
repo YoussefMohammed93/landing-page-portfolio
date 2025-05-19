@@ -286,7 +286,7 @@ export function HeroSection() {
               alt="Social Media Content Creation"
               width={650}
               height={550}
-              className="rounded-2xl object-cover h-full w-full shadow-xl shadow-primary/10"
+              className="object-cover h-full w-full shadow-xl shadow-primary/10"
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
               quality={90}
