@@ -2,6 +2,9 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 
+import Header from "@/components/header";
+
+import { Footer } from "@/components/footer";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConvexClientProvider } from "./convex-client-provider";
 import { AnimationProvider } from "@/components/animation-provider";
@@ -32,7 +35,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AnimationProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
+          <ConvexClientProvider>
+            <Header />
+            {children}
+            <Footer />
+          </ConvexClientProvider>
         </AnimationProvider>
       </body>
     </html>
