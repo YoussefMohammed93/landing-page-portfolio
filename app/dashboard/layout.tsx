@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 
 import {
-  LayoutDashboard,
   Image as ImageIcon,
   Video,
   Layers,
@@ -14,7 +12,6 @@ import {
   Home,
   Film,
 } from "lucide-react";
-
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +24,8 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardLayout({
   children,
@@ -46,11 +45,6 @@ export default function DashboardLayout({
   };
 
   const navigationItems = [
-    {
-      name: "Dashboard",
-      href: "/dashboard",
-      icon: <LayoutDashboard className="size-4" />,
-    },
     {
       name: "Hero",
       href: "/dashboard/hero",
@@ -85,9 +79,9 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full">
         <Sidebar>
-          <SidebarHeader className="flex h-14 border-b px-4">
+          <SidebarHeader className="flex h-[57px] border-b px-4">
             <Link href="/" className="flex items-center gap-2">
               <Image
                 src="/logo.png"
@@ -96,7 +90,7 @@ export default function DashboardLayout({
                 height={28}
                 className="h-auto w-auto"
               />
-              <span className="font-semibold">Media Dashboard</span>
+              <span className="font-semibold">Dashboard</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>
@@ -117,16 +111,18 @@ export default function DashboardLayout({
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="border-t p-4">
-            <Link href="/" className="flex items-center gap-2">
-              <Home className="size-4" />
-              <span>Back to Website</span>
-            </Link>
+          <SidebarFooter className="border-t p-0">
+            <Button asChild variant="ghost" className="w-full">
+              <Link href="/" className="flex items-center justify-start gap-2">
+                <Home className="size-4 mt-0.5" />
+                <span>Back to Website</span>
+              </Link>
+            </Button>
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
-          <div className="flex-1 pt-3 pl-4">
-            <div className="pb-3.5">
+          <div className="w-full flex-1">
+            <div className="bg-card p-3.5">
               <SidebarTrigger />
             </div>
             {children}

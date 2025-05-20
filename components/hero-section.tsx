@@ -3,19 +3,37 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { ArrowRight, Star } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRef, useState, useEffect } from "react";
 import { useAnimation } from "./animation-provider";
+import { ArrowRight, Star, Circle } from "lucide-react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 
 export function HeroSection() {
-  const { prefersReducedMotion } = useAnimation();
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const { prefersReducedMotion } = useAnimation();
 
   const [isMobile, setIsMobile] = useState(false);
   const [isLowEndDevice, setIsLowEndDevice] = useState(false);
+
+  const heroContentQuery = useQuery(api.hero.getHeroContent);
+
+  const heroContent = heroContentQuery || {
+    mainHeading: "Social Media Content That Captivates",
+    highlightedText: "Captivates",
+    description:
+      "We create stunning videos, animations, and music that help brands stand out in the crowded social media landscape.",
+    achievements: [
+      "50+ brands trust our creative team.",
+      "100+ projects completed successfully.",
+      "24/7 support for all our clients.",
+    ],
+    imageUrl: "/hero.svg",
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,8 +67,6 @@ export function HeroSection() {
   const shouldReduceAnimations = prefersReducedMotion || isLowEndDevice;
   const shouldUseReducedAnimations =
     useReducedMotion() || shouldReduceAnimations;
-
-  // const shouldDisableAnimations = isLowEndDevice;
 
   const getAnimationDuration = (baseDuration: number) =>
     shouldReduceAnimations ? baseDuration * 0.6 : baseDuration;
@@ -125,73 +141,97 @@ export function HeroSection() {
               className="space-y-4"
               variants={shouldUseReducedAnimations ? {} : itemVariants}
             >
-              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
-                Social Media Content That{" "}
-                <motion.span
-                  className="relative inline-block"
-                  variants={shouldUseReducedAnimations ? {} : highlightVariants}
-                >
-                  <span className="bg-gradient-to-r from-primary/90 via-primary to-primary/90 bg-clip-text text-transparent">
-                    Captivates
-                  </span>
-                  <motion.span
-                    className="hidden md:block absolute -right-6 top-3 text-primary"
-                    animate={{ rotate: [0, 15, 0] }}
-                    transition={{
-                      duration: shouldReduceAnimations ? 7 : 5,
-                      repeat: Infinity,
-                      ease: shouldReduceAnimations ? "linear" : "easeInOut",
-                    }}
-                  >
-                    <Star className="h-5 w-5 fill-primary" />
-                  </motion.span>
-                </motion.span>
-              </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-[600px] leading-relaxed">
-                We create stunning videos, animations, and music that help
-                brands stand out in the crowded social media landscape.
-              </p>
+              {heroContentQuery === undefined ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 md:h-12 lg:h-14 w-4/5" />
+                  <Skeleton className="h-8 md:h-10 lg:h-12 w-2/5" />
+                  <Skeleton className="h-6 md:h-8 w-full max-w-[600px] mt-4" />
+                  <Skeleton className="h-6 md:h-8 w-4/5 max-w-[500px]" />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
+                    {heroContent.mainHeading.replace(
+                      heroContent.highlightedText,
+                      ""
+                    )}{" "}
+                    <motion.span
+                      className="relative inline-block"
+                      variants={
+                        shouldUseReducedAnimations ? {} : highlightVariants
+                      }
+                    >
+                      <span className="bg-gradient-to-r from-primary/90 via-primary to-primary/90 bg-clip-text text-transparent">
+                        {heroContent.highlightedText}
+                      </span>
+                      <motion.span
+                        className="hidden md:block absolute -right-6 top-3 text-primary"
+                        animate={{ rotate: [0, 15, 0] }}
+                        transition={{
+                          duration: shouldReduceAnimations ? 7 : 5,
+                          repeat: Infinity,
+                          ease: shouldReduceAnimations ? "linear" : "easeInOut",
+                        }}
+                      >
+                        <Star className="h-5 w-5 fill-primary" />
+                      </motion.span>
+                    </motion.span>
+                  </h1>
+                  <p className="text-xl md:text-2xl text-muted-foreground max-w-[600px] leading-relaxed">
+                    {heroContent.description}
+                  </p>
+                </>
+              )}
             </motion.div>
             <motion.div
               className="flex flex-col sm:flex-row gap-4 pt-2"
               variants={shouldUseReducedAnimations ? {} : itemVariants}
             >
-              <Button
-                asChild
-                size="lg"
-                className="font-medium relative overflow-hidden h-12 px-8"
-              >
-                <Link href="#contact">
-                  <span className="relative z-10 flex items-center gap-2">
-                    Get a Quote
-                    {shouldReduceAnimations ? (
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    ) : (
-                      <motion.span
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Number.POSITIVE_INFINITY,
-                          repeatType: "reverse",
-                        }}
-                        className="hidden md:block"
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </motion.span>
-                    )}
-                  </span>
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-12 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
-              >
-                <Link href="#video">
-                  <span className="relative z-10">See Our Work</span>
-                </Link>
-              </Button>
+              {heroContentQuery === undefined ? (
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                  <Skeleton className="h-12 w-40 bg-primary/30" />
+                  <Skeleton className="h-12 w-40 border border-primary/20" />
+                </div>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="font-medium relative overflow-hidden h-12 px-8"
+                  >
+                    <Link href="#contact">
+                      <span className="relative z-10 flex items-center gap-2">
+                        Get a Quote
+                        {shouldReduceAnimations ? (
+                          <ArrowRight className="h-4 w-4 ml-1" />
+                        ) : (
+                          <motion.span
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{
+                              duration: 1.5,
+                              repeat: Number.POSITIVE_INFINITY,
+                              repeatType: "reverse",
+                            }}
+                            className="hidden md:block"
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </motion.span>
+                        )}
+                      </span>
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-12 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
+                  >
+                    <Link href="#video">
+                      <span className="relative z-10">See Our Work</span>
+                    </Link>
+                  </Button>
+                </>
+              )}
             </motion.div>
             <motion.div
               className="flex items-center gap-2 pt-2"
@@ -210,17 +250,31 @@ export function HeroSection() {
                     }
               }
             >
-              <div className="flex flex-col gap-2">
-                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
-                  50+ brands trust our creative team.
-                </p>
-                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
-                  100+ projects completed successfully.
-                </p>
-                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
-                  24/7 support for all our clients.
-                </p>
-              </div>
+              {heroContentQuery === undefined ? (
+                <div className="flex flex-col gap-2 w-full">
+                  {[1, 2, 3].map((index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-4 rounded-full bg-primary/20" />
+                      <Skeleton
+                        className={`h-5 sm:h-6 md:h-7 ${index === 1 ? "w-4/5" : index === 2 ? "w-3/4" : "w-5/6"}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {heroContent.achievements.map(
+                    (achievement: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Circle className="h-4 w-4 text-primary fill-primary/20" />
+                        <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
+                          {achievement}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </motion.div>
           </motion.div>
           <motion.div
@@ -230,58 +284,26 @@ export function HeroSection() {
             variants={shouldUseReducedAnimations ? {} : imageVariants}
             viewport={{ once: true }}
           >
-            <Image
-              src="/hero.svg?height=550&width=650"
-              alt="Social Media Content Creation"
-              width={650}
-              height={550}
-              className="object-cover h-full w-full"
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-              quality={90}
-            />
-            {/* {shouldDisableAnimations ? (
-              <div className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg">
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary/20 p-2 rounded-lg">
-                    <Star className="h-4 w-4 text-primary fill-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      Trusted by 50+ brands worldwide
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Delivering exceptional content since 2024
-                    </p>
-                  </div>
+            {heroContentQuery === undefined ? (
+              <div className="w-full h-full rounded-lg shadow-lg overflow-hidden">
+                <Skeleton className="w-full h-full" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
                 </div>
               </div>
             ) : (
-              <motion.div
-                className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg"
-                initial={{ opacity: 0, y: shouldReduceAnimations ? 10 : 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: shouldReduceAnimations ? 0.5 : 1,
-                  duration: shouldReduceAnimations ? 0.3 : 0.5,
-                  ease: shouldReduceAnimations ? "easeOut" : "easeInOut",
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary/20 p-2.5 rounded-full">
-                    <Star className="h-4 w-4 text-primary fill-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      Trusted by 50+ brands worldwide
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Delivering exceptional content since 2024
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )} */}
+              <div className="relative w-full h-full">
+                <Image
+                  src={heroContent.imageUrl}
+                  alt="Social Media Content Creation"
+                  fill
+                  className="object-cover rounded-lg shadow-lg"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  quality={90}
+                />
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

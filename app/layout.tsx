@@ -1,9 +1,9 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-
 import { Geist, Geist_Mono } from "next/font/google";
-
+import { Toaster } from "@/components/ui/sonner-toast";
+import { ThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "./convex-client-provider";
 import { AnimationProvider } from "@/components/animation-provider";
 
@@ -28,13 +28,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
       >
-        <AnimationProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </AnimationProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <AnimationProvider>
+            <ConvexClientProvider>
+              {children}
+              <Toaster closeButton richColors />
+            </ConvexClientProvider>
+          </AnimationProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
