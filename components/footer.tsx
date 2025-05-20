@@ -230,7 +230,7 @@ export function Footer() {
                   </div>
                   <Button type="submit" className="w-full group">
                     Subscribe
-                    <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </form>
               </div>
@@ -238,22 +238,8 @@ export function Footer() {
           </div>
         </AnimatedSection>
         <div className="h-px bg-border/50 my-8"></div>
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex justify-center items-center gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} Media Team. All rights reserved.</p>
-          <div className="flex gap-6">
-            <Link
-              href="/privacy-policy"
-              className="hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms-of-service"
-              className="hover:text-primary transition-colors"
-            >
-              Terms of Service
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

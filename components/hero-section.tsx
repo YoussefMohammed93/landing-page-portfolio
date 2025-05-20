@@ -3,17 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { useThree } from "./three-provider";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import { useAnimation } from "./animation-provider";
-import { ThreeBackground } from "./three-background";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 
 export function HeroSection() {
   const { prefersReducedMotion } = useAnimation();
-  const { shouldUseThree, setInteractionIntensity } = useThree();
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
@@ -44,28 +41,6 @@ export function HeroSection() {
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = document.documentElement.clientHeight;
-
-      const scrollPercentage = Math.min(
-        scrollTop / (scrollHeight - clientHeight),
-        1
-      );
-
-      const newIntensity = Math.max(1.0 - scrollPercentage * 0.8, 0.2);
-
-      setInteractionIntensity(newIntensity);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [setInteractionIntensity]);
-
   const isInView = useInView(textRef, {
     once: true,
     amount: isMobile ? 0.1 : 0.3,
@@ -75,7 +50,7 @@ export function HeroSection() {
   const shouldUseReducedAnimations =
     useReducedMotion() || shouldReduceAnimations;
 
-  const shouldDisableAnimations = isLowEndDevice;
+  // const shouldDisableAnimations = isLowEndDevice;
 
   const getAnimationDuration = (baseDuration: number) =>
     shouldReduceAnimations ? baseDuration * 0.6 : baseDuration;
@@ -135,29 +110,6 @@ export function HeroSection() {
       ref={sectionRef}
       className="relative pt-32 md:pt-28 pb-16 md:pb-20 overflow-hidden bg-grid"
     >
-      {shouldUseThree ? (
-        <ThreeBackground />
-      ) : (
-        <div className="absolute inset-0 z-0 opacity-40">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/20 via-primary/10 to-background"></div>
-          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full opacity-70"></div>
-          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-primary/15 blur-3xl rounded-full opacity-70"></div>
-          {!isMobile && !shouldReduceAnimations && (
-            <motion.div
-              className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary/10 blur-2xl rounded-full"
-              animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.5, 0.6, 0.5],
-              }}
-              transition={{
-                duration: 8,
-                repeat: Number.POSITIVE_INFINITY,
-                repeatType: "reverse",
-              }}
-            ></motion.div>
-          )}
-        </div>
-      )}
       <div className="max-w-[1360px] relative z-10 mx-auto px-5 md:px-10">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
           <motion.div
@@ -288,7 +240,7 @@ export function HeroSection() {
               sizes="(max-width: 768px) 100vw, 50vw"
               quality={90}
             />
-            {shouldDisableAnimations ? (
+            {/* {shouldDisableAnimations ? (
               <div className="w-max absolute -bottom-5 left-1/2 -translate-x-1/2 md:left-auto md:right-5 md:translate-x-0 bg-background/80 backdrop-blur-md p-4 rounded-xl border border-border shadow-lg">
                 <div className="flex items-center gap-2">
                   <div className="bg-primary/20 p-2 rounded-lg">
@@ -329,7 +281,7 @@ export function HeroSection() {
                   </div>
                 </div>
               </motion.div>
-            )}
+            )} */}
           </motion.div>
         </div>
       </div>

@@ -1,5 +1,8 @@
 "use client";
 
+import Header from "@/components/header";
+
+import { Footer } from "@/components/footer";
 import { HeroSection } from "@/components/hero-section";
 import { VideoSection } from "@/components/video-section";
 import { MusicSection } from "@/components/music-section";
@@ -10,12 +13,14 @@ import { ThreeDAnimationsSection } from "@/components/3d-animations-section";
 export default function MainPage() {
   return (
     <main>
+      <Header />
       <HeroSection />
       <VideoSection />
       <TwoDAnimationsSection />
       <ThreeDAnimationsSection />
       <MusicSection />
       <ContactSection />
+      <Footer />
     </main>
   );
 }
