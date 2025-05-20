@@ -258,48 +258,17 @@ export function HeroSection() {
                     }
               }
             >
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
-                  <Image
-                    src="/avatar-placeholder.png"
-                    alt="Avatar"
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    loading="lazy"
-                    sizes="32px"
-                    quality={50}
-                  />
-                </div>
-                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
-                  <Image
-                    src="/avatar-placeholder.png"
-                    alt="Avatar"
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    loading="lazy"
-                    sizes="32px"
-                    quality={50}
-                  />
-                </div>
-                <div className="w-8 h-8 rounded-full border-2 border-background overflow-hidden">
-                  <Image
-                    src="/avatar-placeholder.png"
-                    alt="Avatar"
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    loading="lazy"
-                    sizes="32px"
-                    quality={50}
-                  />
-                </div>
+              <div className="flex flex-col gap-2">
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
+                  50+ brands trust our creative team.
+                </p>
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
+                  100+ projects completed successfully.
+                </p>
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
+                  24/7 support for all our clients.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">50+ brands</span>{" "}
-                trust our creative team.
-              </p>
             </motion.div>
           </motion.div>
           <motion.div

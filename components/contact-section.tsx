@@ -9,6 +9,8 @@ import {
   Phone,
   MapPin,
   CheckCircle,
+  Send,
+  Loader2,
 } from "lucide-react";
 
 import type React from "react";
@@ -91,7 +93,7 @@ export function ContactSection() {
               <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
               <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
             </div>
-            <span className="text-gradient">Contact</span> Us
+            <span className="text-gradient">Contact Us</span>
             <div className="hidden md:flex items-center mt-2">
               <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>
@@ -99,8 +101,8 @@ export function ContactSection() {
             </div>
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            Ready to elevate your social media content? Get in touch with our
-            team to discuss your project.
+            Ready to elevate your social media content? Get in touch with us to
+            discuss your project.
           </p>
         </div>
         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto bg-card/75 backdrop-blur-md p-7">
@@ -301,7 +303,7 @@ export function ContactSection() {
                         <SelectItem value="3d">3D Animation</SelectItem>
                         <SelectItem value="2d">2D Animation</SelectItem>
                         <SelectItem value="music">Music</SelectItem>
-                        <SelectItem value="all">Full Package</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -341,7 +343,7 @@ export function ContactSection() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full group relative overflow-hidden"
+                    className="w-full"
                     disabled={formState === "submitting"}
                   >
                     <span className="relative z-10">
@@ -349,7 +351,11 @@ export function ContactSection() {
                         ? "Sending..."
                         : "Send Message"}
                     </span>
-                    <span className="absolute inset-0 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out" />
+                    {formState === "submitting" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4"/>
+                    )}
                   </Button>
                 </StaggeredChildren>
               </motion.form>

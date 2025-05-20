@@ -59,7 +59,7 @@ export function TwoDAnimationsSection() {
               <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
               <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
             </div>
-            <span className="text-gradient">Stunning</span> 2D Animations
+            <span className="text-gradient">2D Animations</span>
             <div className="hidden md:flex items-center mt-2">
               <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>

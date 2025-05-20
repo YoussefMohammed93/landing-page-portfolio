@@ -3,14 +3,19 @@
 import * as THREE from "three";
 import { useThree } from "./three-provider";
 import { useAnimation } from "./animation-provider";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame, useThree as useR3FThree } from "@react-three/fiber";
 
-function ParticleSystem({ count = 250, color = "#ff0000" }) {
+function ParticleSystem({ count = 250 }) {
   const { interactionIntensity } = useThree();
   const { prefersReducedMotion } = useAnimation();
   const mesh = useRef<THREE.Points>(null);
   const { viewport, pointer } = useR3FThree();
+  const primaryColor = useThemeColor("primary");
+  const materialRef = useRef<THREE.PointsMaterial>(null);
+
+  const lastColorRef = useRef<string>(primaryColor);
 
   const particles = useMemo(() => {
     const temp = [];
@@ -38,6 +43,20 @@ function ParticleSystem({ count = 250, color = "#ff0000" }) {
     return [positions, sizes];
   }, [particles, count]);
 
+  useEffect(() => {
+    if (
+      materialRef.current &&
+      primaryColor &&
+      primaryColor !== lastColorRef.current
+    ) {
+      try {
+        const threeColor = new THREE.Color(primaryColor);
+        materialRef.current.color.copy(threeColor);
+        lastColorRef.current = primaryColor;
+      } catch {}
+    }
+  }, [primaryColor]);
+
   useFrame((state) => {
     if (!mesh.current || prefersReducedMotion) return;
 
@@ -51,6 +70,18 @@ function ParticleSystem({ count = 250, color = "#ff0000" }) {
 
     mesh.current.rotation.x += mouseY * 0.001 * interactionIntensity;
     mesh.current.rotation.y += mouseX * 0.001 * interactionIntensity;
+
+    if (
+      materialRef.current &&
+      primaryColor &&
+      primaryColor !== lastColorRef.current
+    ) {
+      try {
+        const threeColor = new THREE.Color(primaryColor);
+        materialRef.current.color.copy(threeColor);
+        lastColorRef.current = primaryColor;
+      } catch {}
+    }
   });
 
   return (
@@ -68,10 +99,11 @@ function ParticleSystem({ count = 250, color = "#ff0000" }) {
         />
       </bufferGeometry>
       <pointsMaterial
+        ref={materialRef}
         size={0.1}
         sizeAttenuation
         transparent
-        color={color}
+        color={primaryColor || "#8033cc"}
         blending={THREE.AdditiveBlending}
       />
     </points>
@@ -83,17 +115,33 @@ function GradientBackground() {
   const { prefersReducedMotion } = useAnimation();
   const mesh = useRef<THREE.Mesh>(null);
   const { viewport, pointer } = useR3FThree();
+  const primaryColor = useThemeColor("primary");
+
+  const lastColorRef = useRef<string>(primaryColor);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uColor1: { value: new THREE.Color("#1a1a1a") },
-      uColor2: { value: new THREE.Color("#ff0000").multiplyScalar(0.2) },
+      uColor2: {
+        value: new THREE.Color(primaryColor || "#8033cc").multiplyScalar(0.2),
+      },
       uMouse: { value: new THREE.Vector2(0, 0) },
       uIntensity: { value: interactionIntensity },
     }),
-    [interactionIntensity]
+    [interactionIntensity, primaryColor]
   );
+
+  useEffect(() => {
+    if (primaryColor && primaryColor !== lastColorRef.current) {
+      try {
+        const threeColor = new THREE.Color(primaryColor);
+        uniforms.uColor2.value.copy(threeColor);
+        uniforms.uColor2.value.multiplyScalar(0.2);
+        lastColorRef.current = primaryColor;
+      } catch {}
+    }
+  }, [primaryColor, uniforms.uColor2]);
 
   useFrame((state) => {
     if (!mesh.current || prefersReducedMotion) return;
@@ -102,6 +150,15 @@ function GradientBackground() {
     uniforms.uMouse.value.x = pointer.x;
     uniforms.uMouse.value.y = pointer.y;
     uniforms.uIntensity.value = interactionIntensity;
+
+    if (primaryColor && primaryColor !== lastColorRef.current) {
+      try {
+        const threeColor = new THREE.Color(primaryColor);
+        uniforms.uColor2.value.copy(threeColor);
+        uniforms.uColor2.value.multiplyScalar(0.2);
+        lastColorRef.current = primaryColor;
+      } catch {}
+    }
   });
 
   return (
@@ -168,7 +225,6 @@ function Scene() {
             ? 500
             : 800
         }
-        color="#ff0000"
       />
     </>
   );
@@ -177,15 +233,32 @@ function Scene() {
 export function ThreeBackground() {
   const { shouldUseThree } = useThree();
   const [isClient, setIsClient] = useState(false);
+  const primaryColor = useThemeColor("primary");
+  const [bgStyle, setBgStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  useEffect(() => {
+    if (primaryColor) {
+      try {
+        const color1 = primaryColor + "33"; // 20% opacity
+        const color2 = primaryColor + "11"; // 7% opacity
+
+        const gradient = `radial-gradient(circle at 50% 50%, ${color1} 0%, ${color2} 40%, transparent 70%)`;
+        setBgStyle({ background: gradient });
+      } catch {}
+    }
+  }, [primaryColor]);
+
   if (!isClient || !shouldUseThree) return null;
 
   return (
-    <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+    <div
+      className="absolute inset-0 z-0 opacity-20 pointer-events-none"
+      style={bgStyle}
+    >
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [0, 0, 5], fov: 50 }}

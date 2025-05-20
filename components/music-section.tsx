@@ -244,7 +244,7 @@ export function MusicSection() {
                   />
                 </svg>
               </motion.div>
-              <h3 className="text-lg font-semibold mb-2">Voice Over</h3>
+              <h3 className="text-lg font-semibold mb-2">Audio</h3>
               <p className="text-foreground/70 text-sm">
                 Professional voice talent and audio recording for narration and
                 dialogue
@@ -258,10 +258,9 @@ export function MusicSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <Button className="group relative overflow-hidden">
+            <Button className="group">
               <AudioLinesIcon className="z-10 h-4 w-4" />
               <span className="relative z-10">View All Music Tracks</span>
-              <span className="absolute inset-0 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out" />
             </Button>
           </motion.div>
         </div>

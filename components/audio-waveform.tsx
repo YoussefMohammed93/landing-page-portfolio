@@ -13,11 +13,12 @@ type AudioWaveformProps = {
 
 export function AudioWaveform({
   isPlaying,
-  color = "#ff0000",
+  color,
   height = 40,
   width = 100,
   barCount = 5,
 }: AudioWaveformProps) {
+  const waveformColor = color || "#ffffff";
   const [bars, setBars] = useState<number[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -49,7 +50,7 @@ export function AudioWaveform({
         <motion.div
           key={index}
           className="w-1 rounded-full"
-          style={{ backgroundColor: color }}
+          style={{ backgroundColor: waveformColor }}
           initial={{ height: "20%" }}
           animate={{ height: isPlaying ? `${height * 100}%` : "20%" }}
           transition={{ duration: 0.2 }}
