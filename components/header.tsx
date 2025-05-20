@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSectionTitles } from "./section-titles-provider";
 
 function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
@@ -101,7 +102,9 @@ export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navLinks = [
+  const { sectionTitles } = useSectionTitles();
+
+  const baseNavLinks = [
     {
       name: "Home",
       href: "#hero",
@@ -139,6 +142,16 @@ export default function Navigation() {
       ariaLabel: "Navigate to contact section",
     },
   ];
+
+  const navLinks = baseNavLinks.map((link) => {
+    if (sectionTitles[link.id]) {
+      return {
+        ...link,
+        name: sectionTitles[link.id],
+      };
+    }
+    return link;
+  });
 
   const { activeSection, isProjectsPage } = useActiveSection(navLinks, 150);
 

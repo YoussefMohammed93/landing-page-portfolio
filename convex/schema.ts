@@ -10,4 +10,19 @@ export default defineSchema({
     imageUrl: v.string(),
     updatedAt: v.number(),
   }),
+
+  videoSection: defineTable({
+    title: v.string(),
+    description: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  videoProjects: defineTable({
+    title: v.string(),
+    description: v.string(),
+    thumbnailUrl: v.string(),
+    videoUrl: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 });

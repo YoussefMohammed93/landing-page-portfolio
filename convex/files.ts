@@ -28,6 +28,8 @@ export const generateUploadUrl = mutation({
 export const saveImage = action({
   args: {
     storageId: v.string(),
+    destination: v.optional(v.string()),
+    projectId: v.optional(v.id("videoProjects")),
   },
   handler: async (
     ctx,
@@ -41,9 +43,26 @@ export const saveImage = action({
         throw new ConvexError("Failed to get URL for file");
       }
 
-      const result = await ctx.runMutation(api.hero.updateHeroImage, {
-        imageUrl: url,
-      });
+      let result;
+
+      if (args.destination === "videoProject") {
+        if (args.projectId) {
+          result = await ctx.runMutation(api.video.updateVideoThumbnail, {
+            id: args.projectId,
+            thumbnailUrl: url,
+          });
+        } else {
+          result = { success: true };
+        }
+      } else if (args.destination === "hero") {
+        result = await ctx.runMutation(api.hero.updateHeroImage, {
+          imageUrl: url,
+        });
+      } else {
+        result = await ctx.runMutation(api.hero.updateHeroImage, {
+          imageUrl: url,
+        });
+      }
 
       return { success: true, url, result };
     } catch (error) {

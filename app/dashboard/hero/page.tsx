@@ -125,7 +125,10 @@ export default function HeroPage() {
 
     const { storageId } = await result.json();
 
-    const { url } = await saveImage({ storageId });
+    const { url } = await saveImage({
+      storageId,
+      destination: "hero",
+    });
 
     return url;
   };

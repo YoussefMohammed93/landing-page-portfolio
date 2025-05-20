@@ -17,10 +17,11 @@ import {
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSectionTitles } from "./section-titles-provider";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
 
-const navLinks = [
+const baseNavLinks = [
   {
     name: "Video Editing",
     href: "#video-editing",
@@ -57,10 +58,21 @@ export function Footer() {
   const [email, setEmail] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
 
+  const { sectionTitles } = useSectionTitles();
+
+  const navLinks = baseNavLinks.map((link) => {
+    if (sectionTitles[link.id]) {
+      return {
+        ...link,
+        name: sectionTitles[link.id],
+      };
+    }
+    return link;
+  });
+
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      // Here you would typically send the email to your newsletter service
       console.log("Subscribing email:", email);
       setIsSubscribed(true);
       setEmail("");

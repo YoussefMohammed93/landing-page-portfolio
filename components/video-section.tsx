@@ -4,43 +4,38 @@ import Image from "next/image";
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "convex/react";
 import { Play, Film } from "lucide-react";
 import { VideoModal } from "./video-modal";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Id } from "@/convex/_generated/dataModel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedSection } from "./animated-section";
 import { StaggeredChildren } from "./staggered-children";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function VideoSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
-    id: number;
+    id: Id<"videoProjects"> | number;
     title: string;
     videoSrc: string;
   } | null>(null);
 
-  const videoProjects = [
-    {
-      id: 1,
-      title: "Brand Campaign",
-      description: "TikTok viral campaign for fashion",
-      thumbnail: "/placeholder.svg?height=300&width=500",
-      videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    },
-    {
-      id: 2,
-      title: "Product Launch",
-      description: "Instagram Reels for tech product launch",
-      thumbnail: "/placeholder.svg?height=300&width=500",
-      videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    },
-    {
-      id: 3,
-      title: "Lifestyle Content",
-      description: "YouTube shorts for travel influencer",
-      thumbnail: "/placeholder.svg?height=300&width=500",
-      videoSrc: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    },
-  ];
+  const videoSectionContent = useQuery(api.video.getVideoSectionContent);
+
+  const videoProjects = useQuery(api.video.getVideoProjects, { limit: 3 });
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+
+    return url;
+  };
 
   return (
     <AnimatedSection
@@ -53,74 +48,117 @@ export function VideoSection() {
       </div>
       <div className="max-w-[1360px] mx-auto px-5 md:px-10 relative z-10">
         <div className="text-center mb-12 md:mb-16 max-w-2xl mx-auto">
-          <h2 className="flex items-center justify-center gap-3 md:gap-4 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground">
-            <div className="hidden md:flex items-center mt-2">
-              <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-primary"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
-              <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
-            </div>
-            <span className="text-gradient">Video Editing</span>
-            <div className="hidden md:flex items-center mt-2">
-              <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>
-              <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-l from-transparent via-primary/40 to-primary"></div>
-            </div>
-          </h2>
-          <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
-            We transform raw footage into engaging stories that resonate with
-            your audience across all social media platforms.
-          </p>
-        </div>
-        <StaggeredChildren
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-          animation="slideUp"
-          staggerAmount={0.1}
-          duration={0.4}
-        >
-          {videoProjects.map((project) => (
-            <Card
-              key={project.id}
-              className={cn(
-                "overflow-hidden bg-card/50 border-border hover:border-primary/50 pt-0",
-                "transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
-              )}
-            >
-              <div
-                className="relative aspect-video cursor-pointer"
-                onClick={() =>
-                  setSelectedVideo({
-                    id: project.id,
-                    title: project.title,
-                    videoSrc: project.videoSrc,
-                  })
-                }
-              >
-                <Image
-                  src={project.thumbnail || "/placeholder.svg"}
-                  alt={project.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={project.id === 1}
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <Button size="icon" className="rounded-full">
-                    <Play className="h-6 w-6 text-white" />
-                    <span className="sr-only">Play {project.title} video</span>
-                  </Button>
+          {videoSectionContent === undefined ? (
+            <>
+              <div className="flex items-center justify-center gap-3 md:gap-4 mb-4">
+                <div className="hidden md:flex items-center mt-2">
+                  <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-primary"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
+                  <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
+                </div>
+                <Skeleton className="h-10 w-48" />
+                <div className="hidden md:flex items-center mt-2">
+                  <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>
+                  <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-l from-transparent via-primary/40 to-primary"></div>
                 </div>
               </div>
-              <CardContent className="px-5 py-0">
-                <h3 className="font-bold text-lg md:text-xl mb-2 line-clamp-1">
-                  {project.title}
-                </h3>
-                <p className="text-muted-foreground text-sm line-clamp-2">
-                  {project.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </StaggeredChildren>
+              <Skeleton className="h-20 w-full mx-auto" />
+            </>
+          ) : (
+            <>
+              <h2 className="flex items-center justify-center gap-3 md:gap-4 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 text-foreground">
+                <div className="hidden md:flex items-center mt-2">
+                  <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-primary"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></div>
+                  <div className="w-1 h-1 rounded-full bg-primary/70 ml-1"></div>
+                </div>
+                <span className="text-gradient">
+                  {videoSectionContent.title}
+                </span>
+                <div className="hidden md:flex items-center mt-2">
+                  <div className="w-1 h-1 rounded-full bg-primary/70 mr-1"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1"></div>
+                  <div className="w-14 lg:w-20 h-[1px] bg-gradient-to-l from-transparent via-primary/40 to-primary"></div>
+                </div>
+              </h2>
+              <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto">
+                {videoSectionContent.description}
+              </p>
+            </>
+          )}
+        </div>
+        {videoProjects === undefined ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {[1, 2, 3].map((i) => (
+              <Card
+                key={i}
+                className="overflow-hidden bg-card/50 border-border pt-0"
+              >
+                <div className="relative aspect-video">
+                  <Skeleton className="w-full h-full absolute inset-0" />
+                </div>
+                <CardContent className="px-5 py-4 space-y-2">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <StaggeredChildren
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+            animation="slideUp"
+            staggerAmount={0.1}
+            duration={0.4}
+          >
+            {videoProjects.map((project) => (
+              <Card
+                key={project._id}
+                className={cn(
+                  "overflow-hidden bg-card/50 border-border hover:border-primary/50 pt-0",
+                  "transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
+                )}
+              >
+                <div
+                  className="relative aspect-video cursor-pointer"
+                  onClick={() =>
+                    setSelectedVideo({
+                      id: project._id,
+                      title: project.title,
+                      videoSrc: getYouTubeEmbedUrl(project.videoUrl),
+                    })
+                  }
+                >
+                  <Image
+                    src={project.thumbnailUrl || "/placeholder.svg"}
+                    alt={project.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={videoProjects.indexOf(project) === 0}
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <Button size="icon" className="rounded-full">
+                      <Play className="h-6 w-6 text-white" />
+                      <span className="sr-only">
+                        Play {project.title} video
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+                <CardContent className="px-5 py-4">
+                  <h3 className="font-bold text-lg md:text-xl mb-2 line-clamp-1">
+                    {project.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm line-clamp-2">
+                    {project.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </StaggeredChildren>
+        )}
         <div className="mt-12 md:mt-16 text-center">
           <Button variant="outline" size="lg" className="w-full sm:w-auto">
             <Film className="h-4 w-4" />
@@ -132,7 +170,11 @@ export function VideoSection() {
         <VideoModal
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
-          videoSrc={selectedVideo.videoSrc}
+          videoSrc={
+            typeof selectedVideo.videoSrc === "string"
+              ? selectedVideo.videoSrc
+              : ""
+          }
           videoTitle={selectedVideo.title}
         />
       )}

@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner-toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConvexClientProvider } from "./convex-client-provider";
 import { AnimationProvider } from "@/components/animation-provider";
+import { SectionTitlesProvider } from "@/components/section-titles-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,8 +41,10 @@ export default function RootLayout({
         >
           <AnimationProvider>
             <ConvexClientProvider>
-              {children}
-              <Toaster closeButton richColors />
+              <SectionTitlesProvider>
+                {children}
+                <Toaster closeButton richColors />
+              </SectionTitlesProvider>
             </ConvexClientProvider>
           </AnimationProvider>
         </ThemeProvider>

@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as files from "../files.js";
 import type * as hero from "../hero.js";
+import type * as video from "../video.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,6 +28,7 @@ import type * as hero from "../hero.js";
 declare const fullApi: ApiFromModules<{
   files: typeof files;
   hero: typeof hero;
+  video: typeof video;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
