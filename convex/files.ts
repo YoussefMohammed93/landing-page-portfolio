@@ -30,7 +30,11 @@ export const saveImage = action({
     storageId: v.string(),
     destination: v.optional(v.string()),
     projectId: v.optional(
-      v.union(v.id("videoProjects"), v.id("twoDAnimationsProjects"))
+      v.union(
+        v.id("videoProjects"),
+        v.id("twoDAnimationsProjects"),
+        v.id("threeDAnimationsProjects")
+      )
     ),
   },
   handler: async (
@@ -62,6 +66,18 @@ export const saveImage = action({
             api.twoDAnimations.update2DAnimationThumbnail,
             {
               id: args.projectId as Id<"twoDAnimationsProjects">,
+              thumbnailUrl: url,
+            }
+          );
+        } else {
+          result = { success: true };
+        }
+      } else if (args.destination === "threeDAnimationProject") {
+        if (args.projectId) {
+          result = await ctx.runMutation(
+            api.threeDAnimations.update3DAnimationThumbnail,
+            {
+              id: args.projectId as Id<"threeDAnimationsProjects">,
               thumbnailUrl: url,
             }
           );

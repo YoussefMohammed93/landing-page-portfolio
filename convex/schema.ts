@@ -40,4 +40,19 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_updatedAt", ["updatedAt"]),
+
+  threeDAnimationsSection: defineTable({
+    title: v.string(),
+    description: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  threeDAnimationsProjects: defineTable({
+    title: v.string(),
+    description: v.string(),
+    thumbnailUrl: v.string(),
+    videoUrl: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 });

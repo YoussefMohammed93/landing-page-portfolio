@@ -44,16 +44,25 @@ export function SectionTitlesProvider({ children }: { children: ReactNode }) {
 
   const videoTitles = useQuery(api.video.getSectionTitles);
   const twoDAnimationsTitles = useQuery(api.twoDAnimations.getSectionTitles);
+  const threeDAnimationsTitles = useQuery(
+    api.threeDAnimations.getSectionTitles
+  );
 
   useEffect(() => {
-    if (videoTitles || twoDAnimationsTitles) {
+    if (videoTitles || twoDAnimationsTitles || threeDAnimationsTitles) {
       setSectionTitles((prev) => ({
         ...prev,
         ...videoTitles,
         ...twoDAnimationsTitles,
+        ...threeDAnimationsTitles,
       }));
     }
-  }, [videoTitles, twoDAnimationsTitles, refreshCounter]);
+  }, [
+    videoTitles,
+    twoDAnimationsTitles,
+    threeDAnimationsTitles,
+    refreshCounter,
+  ]);
 
   const refreshTitles = () => {
     setRefreshCounter((prev) => prev + 1);
