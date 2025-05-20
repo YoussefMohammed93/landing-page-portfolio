@@ -101,7 +101,7 @@ export default function DashboardLayout({
                     <SidebarMenuButton
                       isActive={isActive(item.href)}
                       tooltip={item.name}
-                      className="pl-5"
+                      className="pl-5 cursor-pointer"
                     >
                       {item.icon}
                       <span>{item.name}</span>

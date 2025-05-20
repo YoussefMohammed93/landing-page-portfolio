@@ -29,7 +29,9 @@ export const saveImage = action({
   args: {
     storageId: v.string(),
     destination: v.optional(v.string()),
-    projectId: v.optional(v.id("videoProjects")),
+    projectId: v.optional(
+      v.union(v.id("videoProjects"), v.id("twoDAnimationsProjects"))
+    ),
   },
   handler: async (
     ctx,
@@ -48,9 +50,21 @@ export const saveImage = action({
       if (args.destination === "videoProject") {
         if (args.projectId) {
           result = await ctx.runMutation(api.video.updateVideoThumbnail, {
-            id: args.projectId,
+            id: args.projectId as Id<"videoProjects">,
             thumbnailUrl: url,
           });
+        } else {
+          result = { success: true };
+        }
+      } else if (args.destination === "twoDAnimationProject") {
+        if (args.projectId) {
+          result = await ctx.runMutation(
+            api.twoDAnimations.update2DAnimationThumbnail,
+            {
+              id: args.projectId as Id<"twoDAnimationsProjects">,
+              thumbnailUrl: url,
+            }
+          );
         } else {
           result = { success: true };
         }

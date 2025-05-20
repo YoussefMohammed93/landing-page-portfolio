@@ -42,16 +42,18 @@ export function SectionTitlesProvider({ children }: { children: ReactNode }) {
 
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  const titlesFromDB = useQuery(api.video.getSectionTitles);
+  const videoTitles = useQuery(api.video.getSectionTitles);
+  const twoDAnimationsTitles = useQuery(api.twoDAnimations.getSectionTitles);
 
   useEffect(() => {
-    if (titlesFromDB) {
+    if (videoTitles || twoDAnimationsTitles) {
       setSectionTitles((prev) => ({
         ...prev,
-        ...titlesFromDB,
+        ...videoTitles,
+        ...twoDAnimationsTitles,
       }));
     }
-  }, [titlesFromDB, refreshCounter]);
+  }, [videoTitles, twoDAnimationsTitles, refreshCounter]);
 
   const refreshTitles = () => {
     setRefreshCounter((prev) => prev + 1);

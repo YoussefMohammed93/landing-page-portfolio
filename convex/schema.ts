@@ -25,4 +25,19 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_updatedAt", ["updatedAt"]),
+
+  twoDAnimationsSection: defineTable({
+    title: v.string(),
+    description: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  twoDAnimationsProjects: defineTable({
+    title: v.string(),
+    description: v.string(),
+    thumbnailUrl: v.string(),
+    videoUrl: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 });
