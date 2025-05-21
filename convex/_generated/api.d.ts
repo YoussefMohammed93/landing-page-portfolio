@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as files from "../files.js";
 import type * as hero from "../hero.js";
+import type * as music from "../music.js";
 import type * as threeDAnimations from "../threeDAnimations.js";
 import type * as twoDAnimations from "../twoDAnimations.js";
 import type * as video from "../video.js";
@@ -30,6 +31,7 @@ import type * as video from "../video.js";
 declare const fullApi: ApiFromModules<{
   files: typeof files;
   hero: typeof hero;
+  music: typeof music;
   threeDAnimations: typeof threeDAnimations;
   twoDAnimations: typeof twoDAnimations;
   video: typeof video;

@@ -33,7 +33,8 @@ export const saveImage = action({
       v.union(
         v.id("videoProjects"),
         v.id("twoDAnimationsProjects"),
-        v.id("threeDAnimationsProjects")
+        v.id("threeDAnimationsProjects"),
+        v.id("musicTracks")
       )
     ),
   },
@@ -84,6 +85,15 @@ export const saveImage = action({
         } else {
           result = { success: true };
         }
+      } else if (args.destination === "musicTrack") {
+        if (args.projectId) {
+          result = await ctx.runMutation(api.music.updateMusicTrackCover, {
+            id: args.projectId as Id<"musicTracks">,
+            coverArt: url,
+          });
+        } else {
+          result = { success: true };
+        }
       } else if (args.destination === "hero") {
         result = await ctx.runMutation(api.hero.updateHeroImage, {
           imageUrl: url,
@@ -122,6 +132,43 @@ export const deleteFile = action({
     } catch (error) {
       console.error("Error deleting file:", error);
       return { success: false };
+    }
+  },
+});
+
+// Store an audio file in Convex storage and return the URL
+export const saveAudio = action({
+  args: {
+    storageId: v.string(),
+    trackId: v.optional(v.id("musicTracks")),
+  },
+  handler: async (
+    ctx,
+    args
+  ): Promise<{ success: boolean; url: string; result: unknown }> => {
+    try {
+      const storageId = args.storageId as Id<"_storage">;
+
+      const url = await ctx.storage.getUrl(storageId);
+      if (!url) {
+        throw new ConvexError("Failed to get URL for audio file");
+      }
+
+      let result;
+
+      if (args.trackId) {
+        result = await ctx.runMutation(api.music.updateMusicTrackAudio, {
+          id: args.trackId,
+          audioUrl: url,
+        });
+      } else {
+        result = { success: true };
+      }
+
+      return { success: true, url, result };
+    } catch (error) {
+      console.error("Error in saveAudio:", error);
+      throw new ConvexError("Failed to process audio file");
     }
   },
 });

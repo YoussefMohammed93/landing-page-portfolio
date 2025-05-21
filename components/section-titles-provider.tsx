@@ -47,20 +47,28 @@ export function SectionTitlesProvider({ children }: { children: ReactNode }) {
   const threeDAnimationsTitles = useQuery(
     api.threeDAnimations.getSectionTitles
   );
+  const musicTitles = useQuery(api.music.getSectionTitles);
 
   useEffect(() => {
-    if (videoTitles || twoDAnimationsTitles || threeDAnimationsTitles) {
+    if (
+      videoTitles ||
+      twoDAnimationsTitles ||
+      threeDAnimationsTitles ||
+      musicTitles
+    ) {
       setSectionTitles((prev) => ({
         ...prev,
         ...videoTitles,
         ...twoDAnimationsTitles,
         ...threeDAnimationsTitles,
+        ...musicTitles,
       }));
     }
   }, [
     videoTitles,
     twoDAnimationsTitles,
     threeDAnimationsTitles,
+    musicTitles,
     refreshCounter,
   ]);
 

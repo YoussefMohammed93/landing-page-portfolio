@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import { Play, Film } from "lucide-react";
 import { VideoModal } from "./video-modal";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Play, Film, Video } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedSection } from "./animated-section";
@@ -105,6 +105,13 @@ export function VideoSection() {
               </Card>
             ))}
           </div>
+        ) : videoProjects.length === 0 ? (
+          <div className="flex items-center flex-col gap-5 py-10">
+            <Video className="h-24 w-24 text-muted-foreground bg-muted/50 p-5 rounded-full" />
+            <p className="text-muted-foreground text-center">
+              No video projects available yet.
+            </p>
+          </div>
         ) : (
           <StaggeredChildren
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
@@ -159,7 +166,11 @@ export function VideoSection() {
             ))}
           </StaggeredChildren>
         )}
-        <div className="mt-12 md:mt-16 text-center">
+        <div
+          className={`mt-12 md:mt-16 text-center ${
+            videoProjects?.length === 0 ? "hidden" : ""
+          }`}
+        >
           <Button variant="outline" size="lg" className="w-full sm:w-auto">
             <Film className="h-4 w-4" />
             <span className="relative z-10">View All Video Projects</span>

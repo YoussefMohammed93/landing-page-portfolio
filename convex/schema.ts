@@ -55,4 +55,20 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_updatedAt", ["updatedAt"]),
+
+  musicSection: defineTable({
+    title: v.string(),
+    description: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  musicTracks: defineTable({
+    title: v.string(),
+    duration: v.string(),
+    category: v.string(),
+    coverArt: v.string(),
+    audioUrl: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 });
