@@ -17,7 +17,6 @@ import {
   Loader2,
   Link as LinkIcon,
 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import type React from "react";
 
@@ -32,7 +31,10 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import { Label } from "@/components/ui/label";
+import { SiFreelancer } from "react-icons/si";
 import { Button } from "@/components/ui/button";
+import { FaSquareUpwork } from "react-icons/fa6";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,6 +59,10 @@ function getSocialIcon(iconName: string) {
       return <Dribbble className="h-4 w-4" />;
     case "Figma":
       return <Figma className="h-4 w-4" />;
+    case "Upwork":
+      return <FaSquareUpwork className="h-4 w-4" />;
+    case "Freelancer":
+      return <SiFreelancer className="h-4 w-4" />;
     default:
       return <LinkIcon className="h-4 w-4" />;
   }

@@ -193,7 +193,7 @@ export default function DashboardLayout({
                   onClick={logout}
                   className="flex items-center justify-start gap-2"
                 >
-                  <LogOut className="size-4 mr-2" />
+                  <LogOut className="size-4" />
                   <span>Logout</span>
                 </Link>
               </Button>

@@ -22,7 +22,9 @@ import {
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
+import { SiFreelancer } from "react-icons/si";
 import { Button } from "@/components/ui/button";
+import { FaSquareUpwork } from "react-icons/fa6";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useMutation } from "convex/react";
 import { useSectionVisibility } from "@/hooks/use-settings";
@@ -49,6 +51,10 @@ function getSocialIcon(iconName: string) {
       return <Dribbble className="h-4 w-4" />;
     case "Figma":
       return <Figma className="h-4 w-4" />;
+    case "Upwork":
+      return <FaSquareUpwork className="h-4 w-4" />;
+    case "Freelancer":
+      return <SiFreelancer className="h-4 w-4" />;
     default:
       return <ChevronRight className="h-4 w-4" />;
   }

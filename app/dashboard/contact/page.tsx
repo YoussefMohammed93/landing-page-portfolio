@@ -69,7 +69,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/convex/_generated/api";
+import { SiFreelancer } from "react-icons/si";
 import { Button } from "@/components/ui/button";
+import { FaSquareUpwork } from "react-icons/fa6";
 import { Id } from "@/convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useMutation } from "convex/react";
@@ -395,6 +397,8 @@ function SocialMediaTab() {
     { name: "GitHub", icon: "Github" },
     { name: "Dribbble", icon: "Dribbble" },
     { name: "Figma", icon: "Figma" },
+    { name: "Upwork", icon: "Upwork" },
+    { name: "Freelancer", icon: "Freelancer" },
   ];
 
   const handleChange = (
@@ -1157,6 +1161,10 @@ function getIconComponent(iconName: string, className: string) {
       return <Dribbble className={className} />;
     case "Figma":
       return <Figma className={className} />;
+    case "Upwork":
+      return <FaSquareUpwork className={className} />;
+    case "Freelancer":
+      return <SiFreelancer className={className} />;
     default:
       return <LinkIcon className={className} />;
   }

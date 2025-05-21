@@ -3,18 +3,24 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import {
+  Play,
+  Pause,
+  Volume2,
+  AudioLinesIcon,
+  Music,
+  Waves,
+} from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { AudioWaveform } from "./audio-waveform";
 import { Id } from "@/convex/_generated/dataModel";
-import { useState, useRef, useEffect } from "react";
 import { AnimatedSection } from "./animated-section";
 import { motion, AnimatePresence } from "framer-motion";
 import { StaggeredChildren } from "./staggered-children";
 import { Card, CardContent } from "@/components/ui/card";
-import { Play, Pause, Volume2, AudioLinesIcon, Music } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 export function MusicSection() {
   const [activeTrack, setActiveTrack] = useState<Id<"musicTracks"> | null>(
@@ -22,7 +28,10 @@ export function MusicSection() {
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(80);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const animationRef = useRef<number | undefined>(undefined);
 
   const musicSectionContent = useQuery(api.music.getMusicSectionContent);
   const musicTracks = useQuery(api.music.getMusicTracks, { limit: 3 });
@@ -33,6 +42,28 @@ export function MusicSection() {
     }
   }, [volume]);
 
+  const updateProgress = useCallback(() => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      setDuration(audioRef.current.duration || 0);
+      animationRef.current = requestAnimationFrame(updateProgress);
+    }
+  }, []);
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handleTimeChange = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
@@ -40,11 +71,15 @@ export function MusicSection() {
           console.error("Error playing audio:", error);
           setIsPlaying(false);
         });
+        animationRef.current = requestAnimationFrame(updateProgress);
       } else {
         audioRef.current.pause();
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
       }
     }
-  }, [isPlaying, activeTrack]);
+  }, [isPlaying, activeTrack, updateProgress]);
 
   const togglePlay = (trackId: Id<"musicTracks">, audioUrl: string) => {
     if (activeTrack === trackId) {
@@ -54,6 +89,7 @@ export function MusicSection() {
       if (audioRef.current) {
         audioRef.current.src = audioUrl;
         audioRef.current.load();
+        setCurrentTime(0);
       }
       setIsPlaying(true);
     }
@@ -64,7 +100,16 @@ export function MusicSection() {
       id="music"
       className="py-10 md:py-12 bg-gradient-to-b from-background via-background/98 to-background/95 relative overflow-hidden"
     >
-      <audio ref={audioRef} className="hidden" />
+      <audio
+        ref={audioRef}
+        className="hidden"
+        onEnded={() => setIsPlaying(false)}
+        onLoadedMetadata={() => {
+          if (audioRef.current) {
+            setDuration(audioRef.current.duration);
+          }
+        }}
+      />
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary/10 blur-3xl rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-primary/10 blur-3xl rounded-full"></div>
@@ -133,8 +178,8 @@ export function MusicSection() {
                   } hover:border-primary/50`}
                 >
                   <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-8 sm:gap-5">
-                      <div className="flex items-center gap-5">
+                    <div className="flex flex-col md:flex-row gap-8">
+                      <div className="w-full flex items-center gap-5">
                         <Button
                           variant="outline"
                           size="icon"
@@ -175,28 +220,44 @@ export function MusicSection() {
                       <AnimatePresence>
                         {activeTrack === track._id && (
                           <motion.div
-                            className="flex items-center justify-between gap-4"
+                            className="flex items-center justify-end gap-4 w-full"
                             initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: "auto" }}
+                            animate={{ opacity: 1, width: "100%" }}
                             exit={{ opacity: 0, width: 0 }}
                             transition={{ duration: 0.3 }}
                           >
-                            <AudioWaveform
-                              isPlaying={isPlaying && activeTrack === track._id}
-                              height={30}
-                              width={60}
-                              barCount={6}
-                            />
+                            <div className="flex flex-col w-full md:w-3/6 gap-8 md:gap-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatTime(currentTime)}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatTime(duration)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Waves className="h-4 w-4 text-muted-foreground" />
+                                  <Slider
+                                    value={[currentTime]}
+                                    max={duration || 100}
+                                    step={0.1}
+                                    onValueChange={handleTimeChange}
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
 
-                            <div className="flex items-center gap-2 w-48">
-                              <Volume2 className="h-4 w-4 text-muted-foreground" />
-                              <Slider
-                                value={[volume]}
-                                max={100}
-                                step={1}
-                                onValueChange={(value) => setVolume(value[0])}
-                                className="w-full"
-                              />
+                              <div className="flex items-center gap-2 w-full">
+                                <Volume2 className="h-4 w-4 text-muted-foreground" />
+                                <Slider
+                                  value={[volume]}
+                                  max={100}
+                                  step={1}
+                                  onValueChange={(value) => setVolume(value[0])}
+                                  className="w-full"
+                                />
+                              </div>
                             </div>
                           </motion.div>
                         )}
