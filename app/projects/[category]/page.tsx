@@ -293,6 +293,17 @@ export default function ProjectsPage() {
                             size="icon"
                             variant="ghost"
                             className="h-10 w-10 rounded-full bg-primary hover:!bg-primary text-primary-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent the parent onClick from firing
+                              setSelectedAudio({
+                                id: project._id,
+                                title: project.title,
+                                audioSrc: project.audioUrl,
+                                coverArt: project.coverArt,
+                                category: project.category,
+                                duration: project.duration,
+                              });
+                            }}
                           >
                             <Play className="h-4 w-4 ml-0.5" />
                             <span className="sr-only">

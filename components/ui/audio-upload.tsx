@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Upload, X, Loader2, Music } from "lucide-react";
-import { SafariCompatibleAudioPlayer } from "@/components/ui/safari-compatible-audio-player";
+import { WavesurferPlayer } from "@/components/ui/wavesurfer-player";
 
 interface AudioUploadProps {
   value: string;
@@ -105,7 +105,15 @@ export function AudioUpload({
                 </div>
               </div>
               <div className="w-full mt-3 sm:mt-0">
-                <SafariCompatibleAudioPlayer audioSrc={value} />
+                <WavesurferPlayer
+                  audioSrc={value}
+                  waveColor="rgba(255, 255, 255, 0.3)"
+                  progressColor="var(--primary)"
+                  height={40}
+                  barWidth={2}
+                  barGap={2}
+                  barRadius={3}
+                />
               </div>
             </div>
           </div>

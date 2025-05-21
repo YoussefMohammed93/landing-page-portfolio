@@ -721,7 +721,7 @@ export default function MusicPage() {
         </CardContent>
       </Card>
       <Dialog open={isTrackDialogOpen} onOpenChange={setIsTrackDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] sm:max-h-[85vh] md:max-h-[90vh] overflow-y-auto bg-[#111111] p-4 sm:p-6">
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] sm:max-h-[85vh] md:max-h-[90vh] overflow-y-auto bg-[#111111] p-4 sm:p-6">
           <DialogHeader className="mb-4">
             <DialogTitle>
               {isEditMode ? "Edit Music Track" : "Create New Music Track"}

@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import WaveSurfer from "wavesurfer.js";
 
-import { Slider } from "@/components/ui/slider";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { X, Play, Pause, Volume2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
-import { useState, useEffect, useRef, useCallback } from "react";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
+import { WavesurferPlayer } from "@/components/ui/wavesurfer-player";
 
 type AudioModalProps = {
   isOpen: boolean;
@@ -29,13 +30,21 @@ export function AudioModal({
   duration,
 }: AudioModalProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(80);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration2, setDuration2] = useState(0);
+  const [currentPosition, setCurrentPosition] = useState(0);
+  const wavesurferRef = useRef<WaveSurfer | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const animationRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!isOpen) {
+      if (wavesurferRef.current) {
+        try {
+          const position = wavesurferRef.current.getCurrentTime();
+          setCurrentPosition(position);
+        } catch (error) {
+          console.warn("Error getting current position:", error);
+        }
+      }
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,120 +62,13 @@ export function AudioModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
-    }
-  }, [volume]);
-
-  useEffect(() => {
-    if (isOpen && audioRef.current) {
-      audioRef.current.currentTime = 0;
-      setCurrentTime(0);
-
-      setTimeout(() => {
-        if (audioRef.current) {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.error("Error playing audio on modal open:", error);
-              setIsPlaying(false);
-            });
-          }
-          setIsPlaying(true);
-        }
-      }, 100);
-    }
-  }, [isOpen]);
-
-  const updateProgress = useCallback(() => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration2(audioRef.current.duration || 0);
-      animationRef.current = requestAnimationFrame(updateProgress);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        const playWithRetry = () => {
-          const playPromise = audioRef.current?.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.error("Error playing audio:", error);
-
-              if (error.name === "NotAllowedError") {
-                setIsPlaying(false);
-              } else {
-                setTimeout(() => {
-                  if (audioRef.current && isPlaying) {
-                    playWithRetry();
-                  }
-                }, 100);
-              }
-            });
-          }
-        };
-
-        playWithRetry();
-        animationRef.current = requestAnimationFrame(updateProgress);
-      } else {
-        audioRef.current.pause();
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-        }
-      }
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isPlaying, updateProgress]);
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleTimeChange = (value: number[]) => {
-    if (audioRef.current) {
-      const newTime = value[0];
-      const wasPlaying = !audioRef.current.paused;
-
-      setCurrentTime(newTime);
-
-      if (wasPlaying) {
-        audioRef.current.pause();
-      }
-
-      audioRef.current.currentTime = newTime;
-
-      if (wasPlaying) {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.error("Error resuming playback after seeking:", error);
-            setIsPlaying(false);
-          });
-        }
-      }
-    }
-  };
-
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00";
-
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
   const handleClose = () => {
-    setIsPlaying(false);
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
+    if (wavesurferRef.current) {
+      try {
+        wavesurferRef.current.pause();
+      } catch (error) {
+        console.warn("Error pausing audio on close:", error);
+      }
     }
     onClose();
   };
@@ -205,79 +107,35 @@ export function AudioModal({
                 {category} • {duration}
               </p>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(currentTime)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatTime(duration2)}
-                </span>
-              </div>
-              <Slider
-                value={[currentTime]}
-                max={duration2 || 100}
-                step={0.1}
-                onValueChange={handleTimeChange}
-                onValueCommit={(value) => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = value[0];
-                    setCurrentTime(value[0]);
+            <WavesurferPlayer
+              audioSrc={audioSrc}
+              height={60}
+              barWidth={2}
+              barGap={2}
+              barRadius={3}
+              autoPlay={true}
+              initialTime={currentPosition}
+              onReady={(instance) => {
+                if (instance) {
+                  wavesurferRef.current = instance;
+                }
+              }}
+              onPause={() => {
+                if (wavesurferRef.current) {
+                  try {
+                    const position = wavesurferRef.current.getCurrentTime();
+                    setCurrentPosition(position);
+                  } catch (error) {
+                    console.warn("Error storing position on pause:", error);
                   }
-                }}
-                className="w-full"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="icon"
-                className={`h-12 w-12 rounded-full transition-colors ${
-                  isPlaying ? "bg-primary text-primary-foreground" : ""
-                }`}
-                onClick={togglePlay}
-              >
-                {isPlaying ? (
-                  <Pause className="h-5 w-5" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-              </Button>
-              <div className="flex items-center gap-2 w-48">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <Slider
-                  value={[volume]}
-                  max={100}
-                  step={1}
-                  onValueChange={(value) => setVolume(value[0])}
-                  className="w-full"
-                />
-              </div>
-            </div>
+                }
+              }}
+              onFinish={() => {
+                setCurrentPosition(0);
+              }}
+            />
           </div>
         </div>
-        <audio
-          ref={audioRef}
-          src={audioSrc}
-          onEnded={() => setIsPlaying(false)}
-          onLoadedMetadata={() => {
-            if (audioRef.current) {
-              setDuration2(audioRef.current.duration);
-            }
-          }}
-          onSeeking={() => {
-            if (audioRef.current) {
-              setCurrentTime(audioRef.current.currentTime);
-            }
-          }}
-          onSeeked={() => {
-            if (audioRef.current) {
-              setCurrentTime(audioRef.current.currentTime);
-            }
-          }}
-          preload="auto"
-          className="hidden"
-        />
       </CustomDialogContent>
     </Dialog>
   );
