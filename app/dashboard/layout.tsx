@@ -11,6 +11,7 @@ import {
   Settings,
   Home,
   Film,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -81,6 +82,13 @@ export default function DashboardLayout({
       href: "/dashboard/music",
       icon: <Music className="size-4" />,
       id: "music",
+      alwaysVisible: false,
+    },
+    {
+      name: "Contact",
+      href: "/dashboard/contact",
+      icon: <MessageCircle className="size-4" />,
+      id: "contact",
       alwaysVisible: false,
     },
     {

@@ -3,11 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 
+import { toast } from "sonner";
 import {
   Instagram,
   Twitter,
   Youtube,
   Linkedin,
+  Facebook,
+  Github,
+  Dribbble,
+  Figma,
   Mail,
   Phone,
   MapPin,
@@ -15,14 +20,37 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
-import { useQuery } from "convex/react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { useQuery, useMutation } from "convex/react";
 import { useSectionVisibility } from "@/hooks/use-settings";
 import { useSectionTitles } from "./section-titles-provider";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
+
+function getSocialIcon(iconName: string) {
+  switch (iconName) {
+    case "Instagram":
+      return <Instagram className="h-4 w-4" />;
+    case "Twitter":
+      return <Twitter className="h-4 w-4" />;
+    case "Youtube":
+      return <Youtube className="h-4 w-4" />;
+    case "Linkedin":
+      return <Linkedin className="h-4 w-4" />;
+    case "Facebook":
+      return <Facebook className="h-4 w-4" />;
+    case "Github":
+      return <Github className="h-4 w-4" />;
+    case "Dribbble":
+      return <Dribbble className="h-4 w-4" />;
+    case "Figma":
+      return <Figma className="h-4 w-4" />;
+    default:
+      return <ChevronRight className="h-4 w-4" />;
+  }
+}
 
 const baseNavLinks = [
   {
@@ -59,11 +87,14 @@ const baseNavLinks = [
 
 export function Footer() {
   const [email, setEmail] = useState("");
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { sectionTitles } = useSectionTitles();
   const { isSectionVisible } = useSectionVisibility();
   const settings = useQuery(api.settings.getSettings);
+  const contactDetails = useQuery(api.contact.getContactDetails);
+  const socialMediaLinks = useQuery(api.contact.getSocialMediaLinks);
+  const subscribeToNewsletter = useMutation(api.contact.subscribeToNewsletter);
 
   const heroContentQuery = useQuery(api.hero.getHeroContent);
 
@@ -86,16 +117,26 @@ export function Footer() {
     return link;
   });
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      console.log("Subscribing email:", email);
-      setIsSubscribed(true);
-      setEmail("");
+      setIsSubmitting(true);
 
-      setTimeout(() => {
-        setIsSubscribed(false);
-      }, 5000);
+      try {
+        const result = await subscribeToNewsletter({ email });
+
+        if (result.alreadySubscribed) {
+          toast.info("You're already subscribed with this email address.");
+        } else {
+          toast.success("Successfully subscribed to newsletter!");
+          setEmail("");
+        }
+      } catch (error) {
+        console.error("Error subscribing to newsletter:", error);
+        toast.error("Failed to subscribe. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -132,38 +173,90 @@ export function Footer() {
                 </p>
               </div>
               <div className="flex gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                  aria-label="Follow us on Instagram"
-                >
-                  <Instagram className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                  aria-label="Follow us on Twitter"
-                >
-                  <Twitter className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                  aria-label="Subscribe to our YouTube channel"
-                >
-                  <Youtube className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                  aria-label="Connect with us on LinkedIn"
-                >
-                  <Linkedin className="h-4 w-4" />
-                </Button>
+                {socialMediaLinks === undefined ||
+                socialMediaLinks.length === 0 ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      aria-label="Follow us on Instagram"
+                      asChild
+                    >
+                      <a
+                        href="https://instagram.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Instagram className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      aria-label="Follow us on Twitter"
+                      asChild
+                    >
+                      <a
+                        href="https://twitter.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Twitter className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      aria-label="Subscribe to our YouTube channel"
+                      asChild
+                    >
+                      <a
+                        href="https://youtube.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Youtube className="h-4 w-4" />
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      aria-label="Connect with us on LinkedIn"
+                      asChild
+                    >
+                      <a
+                        href="https://linkedin.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Linkedin className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  socialMediaLinks.map((link) => (
+                    <Button
+                      key={link._id}
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      aria-label={`Follow us on ${link.platform}`}
+                      asChild
+                    >
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {getSocialIcon(link.icon)}
+                      </a>
+                    </Button>
+                  ))
+                )}
               </div>
             </StaggeredChildren>
             <StaggeredChildren
@@ -199,24 +292,31 @@ export function Footer() {
                 <ul className="space-y-3">
                   <li>
                     <a
-                      href="mailto:email@support.com"
+                      href={`mailto:${
+                        contactDetails?.email || "email@support.com"
+                      }`}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group"
                     >
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <Mail className="h-4 w-4 text-primary" />
                       </div>
-                      <span>email@support.com</span>
+                      <span>
+                        {contactDetails?.email || "email@support.com"}
+                      </span>
                     </a>
                   </li>
                   <li>
                     <a
-                      href="tel:+20950306935"
+                      href={`tel:${
+                        contactDetails?.phone?.replace(/\s+/g, "") ||
+                        "+20950306935"
+                      }`}
                       className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 group"
                     >
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <Phone className="h-4 w-4 text-primary" />
                       </div>
-                      <span>+20 950 306 935</span>
+                      <span>{contactDetails?.phone || "+20 950 306 935"}</span>
                     </a>
                   </li>
                   <li>
@@ -224,7 +324,9 @@ export function Footer() {
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <MapPin className="h-4 w-4 text-primary" />
                       </div>
-                      <span>Mansoura, Egypt</span>
+                      <span>
+                        {contactDetails?.location || "Mansoura, Egypt"}
+                      </span>
                     </div>
                   </li>
                 </ul>
@@ -251,15 +353,16 @@ export function Footer() {
                       required
                       className="pr-10 bg-background/50 border-border focus:border-primary transition-colors"
                     />
-                    {isSubscribed ? (
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-primary">
-                        <span className="text-xs">Subscribed!</span>
-                      </div>
-                    ) : null}
                   </div>
-                  <Button type="submit" className="w-full group">
-                    Subscribe
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <Button
+                    type="submit"
+                    className="w-full group"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Subscribing..." : "Subscribe"}
+                    {!isSubmitting && (
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    )}
                   </Button>
                 </form>
               </div>

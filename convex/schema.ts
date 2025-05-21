@@ -72,6 +72,36 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_updatedAt", ["updatedAt"]),
 
+  contactDetails: defineTable({
+    email: v.string(),
+    phone: v.string(),
+    location: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  socialMedia: defineTable({
+    platform: v.string(),
+    icon: v.string(),
+    url: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
+
+  contactMessages: defineTable({
+    name: v.string(),
+    email: v.string(),
+    service: v.string(),
+    message: v.string(),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+
+  newsletter: defineTable({
+    email: v.string(),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_createdAt", ["createdAt"]),
+
   settings: defineTable({
     websiteName: v.string(),
     logoUrl: v.string(),

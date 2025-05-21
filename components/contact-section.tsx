@@ -5,12 +5,17 @@ import {
   Twitter,
   Youtube,
   Linkedin,
+  Facebook,
+  Github,
+  Dribbble,
+  Figma,
   Mail,
   Phone,
   MapPin,
   CheckCircle,
   Send,
   Loader2,
+  Link as LinkIcon,
 } from "lucide-react";
 
 import type React from "react";
@@ -24,12 +29,37 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { api } from "@/convex/_generated/api";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
+
+function getSocialIcon(iconName: string) {
+  switch (iconName) {
+    case "Instagram":
+      return <Instagram className="h-4 w-4" />;
+    case "Twitter":
+      return <Twitter className="h-4 w-4" />;
+    case "Youtube":
+      return <Youtube className="h-4 w-4" />;
+    case "Linkedin":
+      return <Linkedin className="h-4 w-4" />;
+    case "Facebook":
+      return <Facebook className="h-4 w-4" />;
+    case "Github":
+      return <Github className="h-4 w-4" />;
+    case "Dribbble":
+      return <Dribbble className="h-4 w-4" />;
+    case "Figma":
+      return <Figma className="h-4 w-4" />;
+    default:
+      return <LinkIcon className="h-4 w-4" />;
+  }
+}
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -42,6 +72,10 @@ export function ContactSection() {
     "idle" | "submitting" | "success" | "error"
   >("idle");
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  const contactDetails = useQuery(api.contact.getContactDetails);
+  const socialMediaLinks = useQuery(api.contact.getSocialMediaLinks);
+  const submitContactForm = useMutation(api.contact.submitContactForm);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -66,14 +100,26 @@ export function ContactSection() {
     e.preventDefault();
     setFormState("submitting");
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      await submitContactForm({
+        name: formData.name,
+        email: formData.email,
+        service: formData.service,
+        message: formData.message,
+      });
 
-    setFormState("success");
-    setTimeout(() => {
-      setFormState("idle");
-      setFormData({ name: "", email: "", service: "", message: "" });
-    }, 3000);
+      setFormState("success");
+      setTimeout(() => {
+        setFormState("idle");
+        setFormData({ name: "", email: "", service: "", message: "" });
+      }, 3000);
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
+      setFormState("error");
+      setTimeout(() => {
+        setFormState("idle");
+      }, 3000);
+    }
   };
 
   return (
@@ -123,7 +169,7 @@ export function ContactSection() {
                   <Mail className="h-5 w-5 text-primary" />
                 </div>
                 <p className="group-hover:text-primary transition-colors">
-                  email@support.com
+                  {contactDetails?.email || "email@support.com"}
                 </p>
               </div>
               <div className="flex items-center gap-3 group">
@@ -131,7 +177,7 @@ export function ContactSection() {
                   <Phone className="h-5 w-5 text-primary" />
                 </div>
                 <p className="group-hover:text-primary transition-colors">
-                  +20 950 306 935
+                  {contactDetails?.phone || "+20 950 306 935"}
                 </p>
               </div>
               <div className="flex items-center gap-3 group">
@@ -139,45 +185,97 @@ export function ContactSection() {
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <p className="group-hover:text-primary transition-colors">
-                  Mansoura, Egypt
+                  {contactDetails?.location || "Mansoura, Egypt"}
                 </p>
               </div>
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Follow Us</h3>
               <div className="flex gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Instagram className="h-4 w-4" />
-                  <span className="sr-only">Instagram</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Twitter className="h-4 w-4" />
-                  <span className="sr-only">Twitter</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Youtube className="h-4 w-4" />
-                  <span className="sr-only">YouTube</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Linkedin className="h-4 w-4" />
-                  <span className="sr-only">LinkedIn</span>
-                </Button>
+                {socialMediaLinks === undefined ||
+                socialMediaLinks.length === 0 ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      asChild
+                    >
+                      <a
+                        href="https://instagram.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Instagram className="h-4 w-4" />
+                        <span className="sr-only">Instagram</span>
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      asChild
+                    >
+                      <a
+                        href="https://twitter.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Twitter className="h-4 w-4" />
+                        <span className="sr-only">Twitter</span>
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      asChild
+                    >
+                      <a
+                        href="https://youtube.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Youtube className="h-4 w-4" />
+                        <span className="sr-only">YouTube</span>
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      asChild
+                    >
+                      <a
+                        href="https://linkedin.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Linkedin className="h-4 w-4" />
+                        <span className="sr-only">LinkedIn</span>
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  socialMediaLinks.map((link) => (
+                    <Button
+                      key={link._id}
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                      asChild
+                    >
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {getSocialIcon(link.icon)}
+                        <span className="sr-only">{link.platform}</span>
+                      </a>
+                    </Button>
+                  ))
+                )}
               </div>
             </div>
           </StaggeredChildren>
@@ -299,9 +397,15 @@ export function ContactSection() {
                         <SelectValue placeholder="Select a service" />
                       </SelectTrigger>
                       <SelectContent className="w-full">
-                        <SelectItem value="video">Video Editing</SelectItem>
-                        <SelectItem value="3d">3D Animation</SelectItem>
-                        <SelectItem value="2d">2D Animation</SelectItem>
+                        <SelectItem value="video-editing">
+                          Video Editing
+                        </SelectItem>
+                        <SelectItem value="3d-animation">
+                          3D Animation
+                        </SelectItem>
+                        <SelectItem value="2d-animation">
+                          2D Animation
+                        </SelectItem>
                         <SelectItem value="music">Music</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
@@ -354,7 +458,7 @@ export function ContactSection() {
                     {formState === "submitting" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Send className="h-4 w-4"/>
+                      <Send className="h-4 w-4" />
                     )}
                   </Button>
                 </StaggeredChildren>
