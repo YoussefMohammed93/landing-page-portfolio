@@ -12,6 +12,8 @@ import {
   Home,
   Film,
   MessageCircle,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +31,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth-provider";
+import { ProtectedRoute } from "@/components/protected-route";
 
 export default function DashboardLayout({
   children,
@@ -37,6 +41,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const settings = useQuery(api.settings.getSettings);
+  const { logout } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/dashboard" && pathname === "/dashboard") {
@@ -49,6 +54,13 @@ export default function DashboardLayout({
   };
 
   const baseNavigationItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: <LayoutDashboard className="size-4" />,
+      id: "dashboard",
+      alwaysVisible: true,
+    },
     {
       name: "Hero",
       href: "/dashboard/hero",
@@ -122,62 +134,81 @@ export default function DashboardLayout({
   });
 
   return (
-    <SidebarProvider defaultOpen>
-      <div className="flex min-h-screen w-full">
-        <Sidebar>
-          <SidebarHeader className="flex h-[57px] border-b px-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 relative w-10 h-10"
-            >
-              <Image
-                src={settings?.logoUrl || "/logo.png"}
-                alt={`${settings?.websiteName || ""} Logo`}
-                fill
-                className="object-contain"
-                unoptimized={
-                  settings?.logoUrl?.includes("/storage/") ||
-                  settings?.logoUrl?.endsWith(".svg")
-                }
-              />
-            </Link>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} passHref>
-                    <SidebarMenuButton
-                      isActive={isActive(item.href)}
-                      tooltip={item.name}
-                      className="pl-5 cursor-pointer"
-                    >
-                      {item.icon}
-                      <span>{item.name}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter className="border-t p-0">
-            <Button asChild variant="ghost" className="w-full">
-              <Link href="/" className="flex items-center justify-start gap-2">
-                <Home className="size-4 mt-0.5" />
-                <span>Back to Website</span>
+    <ProtectedRoute>
+      <SidebarProvider defaultOpen>
+        <div className="flex min-h-screen w-full">
+          <Sidebar>
+            <SidebarHeader className="flex h-[57px] border-b px-4">
+              <Link
+                href="/"
+                className="flex items-center gap-2 relative w-10 h-10"
+              >
+                <Image
+                  src={settings?.logoUrl || "/logo.png"}
+                  alt={`${settings?.websiteName || ""} Logo`}
+                  fill
+                  className="object-contain"
+                  unoptimized={
+                    settings?.logoUrl?.includes("/storage/") ||
+                    settings?.logoUrl?.endsWith(".svg")
+                  }
+                />
               </Link>
-            </Button>
-          </SidebarFooter>
-        </Sidebar>
-        <SidebarInset>
-          <div className="w-full flex-1">
-            <div className="bg-card p-3.5">
-              <SidebarTrigger />
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {navigationItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <Link href={item.href} passHref>
+                      <SidebarMenuButton
+                        isActive={isActive(item.href)}
+                        tooltip={item.name}
+                        className="pl-5 cursor-pointer"
+                      >
+                        {item.icon}
+                        <span>{item.name}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter className="border-t p-0 flex flex-col gap-0">
+              <Button asChild variant="ghost" className="w-full">
+                <Link
+                  href="/"
+                  className="flex items-center justify-start gap-2"
+                >
+                  <Home className="size-4" />
+                  <span>Back to Website</span>
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="w-full text-destructive hover:text-destructive border-t"
+              >
+                <Link
+                  href="/"
+                  onClick={logout}
+                  className="flex items-center justify-start gap-2"
+                >
+                  <LogOut className="size-4 mr-2" />
+                  <span>Logout</span>
+                </Link>
+              </Button>
+            </SidebarFooter>
+          </Sidebar>
+          <SidebarInset>
+            <div className="w-full flex-1">
+              <div className="bg-card p-3.5">
+                <SidebarTrigger />
+              </div>
+              {children}
             </div>
-            {children}
-          </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </ProtectedRoute>
   );
 }

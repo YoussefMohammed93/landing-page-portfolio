@@ -114,4 +114,10 @@ export default defineSchema({
     }),
     updatedAt: v.number(),
   }),
+
+  admins: defineTable({
+    username: v.string(),
+    password: v.string(),
+    createdAt: v.number(),
+  }).index("by_username", ["username"]),
 });
