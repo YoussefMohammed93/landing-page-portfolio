@@ -28,6 +28,7 @@ import { useQuery, useMutation } from "convex/react";
 import { useSectionVisibility } from "@/hooks/use-settings";
 import { useSectionTitles } from "./section-titles-provider";
 import { AnimatedSection } from "@/components/animated-section";
+import { useScrollToSection } from "@/hooks/use-scroll-to-section";
 import { StaggeredChildren } from "@/components/staggered-children";
 
 function getSocialIcon(iconName: string) {
@@ -96,6 +97,7 @@ export function Footer() {
   const contactDetails = useQuery(api.contact.getContactDetails);
   const socialMediaLinks = useQuery(api.contact.getSocialMediaLinks);
   const subscribeToNewsletter = useMutation(api.contact.subscribeToNewsletter);
+  const scrollToSection = useScrollToSection();
 
   const heroContentQuery = useQuery(api.hero.getHeroContent);
 
@@ -298,6 +300,10 @@ export function Footer() {
                             href={link.href}
                             className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
                             aria-label={link.ariaLabel}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              scrollToSection(link.id);
+                            }}
                           >
                             <ChevronRight className="h-3 w-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
                             {link.name}

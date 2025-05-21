@@ -122,7 +122,7 @@ export function HeroSection() {
 
   return (
     <section
-      id="home"
+      id="hero"
       ref={sectionRef}
       className="relative pt-32 md:pt-28 pb-16 md:pb-20 overflow-hidden bg-grid"
     >

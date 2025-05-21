@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSectionVisibility } from "@/hooks/use-settings";
 import { useSectionTitles } from "./section-titles-provider";
+import { useScrollToSection } from "@/hooks/use-scroll-to-section";
 
 function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
@@ -115,6 +116,7 @@ export default function Navigation() {
   const { sectionTitles } = useSectionTitles();
   const { isSectionVisible } = useSectionVisibility();
   const settings = useQuery(api.settings.getSettings);
+  const scrollToSection = useScrollToSection();
 
   const baseNavLinks = [
     {
@@ -313,6 +315,12 @@ export default function Navigation() {
                     aria-current={
                       activeSection === link.id ? "page" : undefined
                     }
+                    onClick={(e) => {
+                      if (!isProjectsPage) {
+                        e.preventDefault();
+                        scrollToSection(link.id);
+                      }
+                    }}
                   >
                     <span className="relative z-10">{link.name}</span>
                     <motion.span
@@ -419,8 +427,7 @@ export default function Navigation() {
           >
             <div className="container mx-auto px-4 py-4 flex flex-col space-y-1 border-b">
               {settings === undefined
-                ?
-                  Array.from({ length: 5 }).map((_, i) => (
+                ? Array.from({ length: 5 }).map((_, i) => (
                     <motion.div
                       key={i}
                       variants={mobileNavItemVariants}
@@ -431,8 +438,7 @@ export default function Navigation() {
                       </div>
                     </motion.div>
                   ))
-                :
-                  navLinks.map((link) => (
+                : navLinks.map((link) => (
                     <motion.div
                       key={link.name}
                       variants={mobileNavItemVariants}
@@ -448,7 +454,13 @@ export default function Navigation() {
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-primary/5"
                         )}
-                        onClick={() => setIsMobileMenuOpen(false)}
+                        onClick={(e) => {
+                          setIsMobileMenuOpen(false);
+                          if (!isProjectsPage) {
+                            e.preventDefault();
+                            scrollToSection(link.id);
+                          }
+                        }}
                         aria-label={link.ariaLabel}
                         aria-current={
                           activeSection === link.id ? "page" : undefined
