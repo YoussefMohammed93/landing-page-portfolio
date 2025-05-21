@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 
 import { useState } from "react";
@@ -181,11 +182,18 @@ export function ThreeDAnimationsSection() {
             animationProjects?.length === 0 ? "hidden" : ""
           }`}
         >
-          <Button variant="outline" size="lg" className="w-full sm:w-auto">
-            <Film className="h-4 w-4" />
-            <span className="relative z-10">
-              View All 3D Animation Projects
-            </span>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            <Link href="/projects/3d-animations">
+              <Film className="h-4 w-4" />
+              <span className="relative z-10">
+                View All 3D Animation Projects
+              </span>
+            </Link>
           </Button>
         </div>
       </div>

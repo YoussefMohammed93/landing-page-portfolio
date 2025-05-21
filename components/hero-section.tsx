@@ -226,7 +226,7 @@ export function HeroSection() {
                     size="lg"
                     className="h-12 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
                   >
-                    <Link href="#video">
+                    <Link href="#video-editing">
                       <span className="relative z-10">See Our Work</span>
                     </Link>
                   </Button>
@@ -256,7 +256,13 @@ export function HeroSection() {
                     <div key={index} className="flex items-center gap-2">
                       <Skeleton className="h-4 w-4 rounded-full bg-primary/20" />
                       <Skeleton
-                        className={`h-5 sm:h-6 md:h-7 ${index === 1 ? "w-4/5" : index === 2 ? "w-3/4" : "w-5/6"}`}
+                        className={`h-5 sm:h-6 md:h-7 ${
+                          index === 1
+                            ? "w-4/5"
+                            : index === 2
+                            ? "w-3/4"
+                            : "w-5/6"
+                        }`}
                       />
                     </div>
                   ))}

@@ -10,8 +10,8 @@ import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSectionTitles } from "./section-titles-provider";
 import { useSectionVisibility } from "@/hooks/use-settings";
+import { useSectionTitles } from "./section-titles-provider";
 
 function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
@@ -37,6 +37,12 @@ function useActiveSection(sections: Array<{ id: string }>, offset = 100) {
       setIsProjectsPage(pathname.startsWith("/projects"));
     }
   }, []);
+
+  useEffect(() => {
+    if (isProjectsPage) {
+      setActiveSection("hero");
+    }
+  }, [isProjectsPage]);
 
   useEffect(() => {
     const handleScroll = throttle(() => {

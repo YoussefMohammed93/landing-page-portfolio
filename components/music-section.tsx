@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 
 import { useQuery } from "convex/react";
@@ -214,9 +215,11 @@ export function MusicSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Button className="group" variant="outline" size="lg">
-                <AudioLinesIcon className="z-10 h-4 w-4" />
-                <span className="relative z-10">View All Music Tracks</span>
+              <Button asChild className="group" variant="outline" size="lg">
+                <Link href="/projects/music">
+                  <AudioLinesIcon className="z-10 h-4 w-4" />
+                  <span className="relative z-10">View All Music Tracks</span>
+                </Link>
               </Button>
             </motion.div>
           )}
