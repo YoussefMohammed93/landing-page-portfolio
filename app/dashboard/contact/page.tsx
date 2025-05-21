@@ -134,7 +134,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="space-y-6 w-full bg-card p-6">
+    <div className="space-y-6 w-full bg-card border-t pt-4 px-4">
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
@@ -264,14 +264,14 @@ function ContactDetailsTab() {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="p-0 border-0 shadow-none">
+      <CardHeader className="p-0">
         <CardTitle>Contact Details</CardTitle>
         <CardDescription>
           Update your contact information that appears on your website.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {contactDetails === undefined ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -338,7 +338,7 @@ function ContactDetailsTab() {
           </form>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-0 pb-4">
         {contactDetails === undefined ? (
           <Skeleton className="h-10 w-24 ml-auto" />
         ) : (
@@ -350,12 +350,12 @@ function ContactDetailsTab() {
           >
             {isSubmitting ? (
               <>
-                <Loader2 className=" h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className=" h-4 w-4" />
+                <Save className="h-4 w-4" />
                 Save Changes
               </>
             )}
@@ -480,8 +480,8 @@ function SocialMediaTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-5 justify-between">
+      <Card className="border-0 shadow-none p-0">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-5 p-0 justify-between">
           <div>
             <CardTitle>Social Media Links</CardTitle>
             <CardDescription>
@@ -497,7 +497,7 @@ function SocialMediaTab() {
             Add New Link
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {socialMediaLinks === undefined ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -519,7 +519,7 @@ function SocialMediaTab() {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               {socialMediaLinks.map((link) => (
                 <div
                   key={link._id}
@@ -765,8 +765,8 @@ function MessagesTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-5 justify-between">
+      <Card className="border-0 p-0 shadow-none">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center p-0 gap-5 justify-between">
           <div>
             <CardTitle>Contact Messages</CardTitle>
             <CardDescription>
@@ -800,7 +800,7 @@ function MessagesTab() {
             </Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -846,7 +846,7 @@ function MessagesTab() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-4">
               {messages.map((message) => (
                 <Card
                   key={message._id}
@@ -1024,8 +1024,8 @@ function NewsletterTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-5 justify-between">
+      <Card className="border-0 p-0 shadow-none">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center p-0 gap-5 justify-between">
           <div>
             <CardTitle>Newsletter Subscriptions</CardTitle>
             <CardDescription>
@@ -1059,7 +1059,7 @@ function NewsletterTab() {
             </Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="relative mb-6">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -1083,7 +1083,7 @@ function NewsletterTab() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border mb-4">
               <Table>
                 <TableHeader>
                   <TableRow>

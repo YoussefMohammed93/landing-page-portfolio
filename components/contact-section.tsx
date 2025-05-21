@@ -17,6 +17,7 @@ import {
   Loader2,
   Link as LinkIcon,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type React from "react";
 
@@ -163,37 +164,53 @@ export function ContactSection() {
                 Reach out to us directly or fill out the form to get started.
               </p>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 group">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Mail className="h-5 w-5 text-primary" />
-                </div>
-                <p className="group-hover:text-primary transition-colors">
-                  {contactDetails?.email || "email@support.com"}
-                </p>
+            {contactDetails === undefined ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-5 w-48" />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-3 group">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Phone className="h-5 w-5 text-primary" />
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 group">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Mail className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="group-hover:text-primary transition-colors">
+                    {contactDetails?.email || "email@support.com"}
+                  </p>
                 </div>
-                <p className="group-hover:text-primary transition-colors">
-                  {contactDetails?.phone || "+20 950 306 935"}
-                </p>
-              </div>
-              <div className="flex items-center gap-3 group">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <MapPin className="h-5 w-5 text-primary" />
+                <div className="flex items-center gap-3 group">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Phone className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="group-hover:text-primary transition-colors">
+                    {contactDetails?.phone || "+20 950 306 935"}
+                  </p>
                 </div>
-                <p className="group-hover:text-primary transition-colors">
-                  {contactDetails?.location || "Mansoura, Egypt"}
-                </p>
+                <div className="flex items-center gap-3 group">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="group-hover:text-primary transition-colors">
+                    {contactDetails?.location || "Mansoura, Egypt"}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Follow Us</h3>
               <div className="flex gap-4">
-                {socialMediaLinks === undefined ||
-                socialMediaLinks.length === 0 ? (
+                {socialMediaLinks === undefined ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <Skeleton key={i} className="h-9 w-9 rounded-full" />
+                    ))}
+                  </>
+                ) : socialMediaLinks.length === 0 ? (
                   <>
                     <Button
                       variant="outline"
@@ -280,7 +297,34 @@ export function ContactSection() {
             </div>
           </StaggeredChildren>
           <AnimatePresence mode="wait">
-            {formState === "success" ? (
+            {contactDetails === undefined ? (
+              <motion.div
+                className="space-y-6"
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-32 w-full" />
+                  </div>
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </motion.div>
+            ) : formState === "success" ? (
               <motion.div
                 className="flex flex-col items-center justify-center h-full bg-secondary/30 rounded-lg p-8"
                 initial={{ opacity: 0, scale: 0.9 }}

@@ -4,7 +4,7 @@ import Image from "next/image";
 
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Play, Pause, Volume2 } from "lucide-react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
@@ -72,6 +72,14 @@ export function AudioModal({
     }
   }, [isOpen]);
 
+  const updateProgress = useCallback(() => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      setDuration2(audioRef.current.duration || 0);
+      animationRef.current = requestAnimationFrame(updateProgress);
+    }
+  }, []);
+
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
@@ -87,15 +95,7 @@ export function AudioModal({
         }
       }
     }
-  }, [isPlaying]);
-
-  const updateProgress = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration2(audioRef.current.duration || 0);
-      animationRef.current = requestAnimationFrame(updateProgress);
-    }
-  };
+  }, [isPlaying, updateProgress]);
 
   const togglePlay = () => {
     setIsPlaying(!isPlaying);

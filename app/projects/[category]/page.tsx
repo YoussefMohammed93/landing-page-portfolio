@@ -14,11 +14,11 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import { useParams } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AudioModal } from "@/components/audio-modal";
+import { useParams, notFound } from "next/navigation";
 import { VideoModal } from "@/components/video-modal";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,6 +90,10 @@ const categoryConfig: Record<
 export default function ProjectsPage() {
   const params = useParams<{ category: string }>();
   const category = params.category;
+
+  if (!Object.keys(categoryConfig).includes(category)) {
+    notFound();
+  }
 
   const [selectedVideo, setSelectedVideo] = useState<{
     id:

@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSectionVisibility } from "@/hooks/use-settings";
@@ -249,69 +250,90 @@ export default function Navigation() {
     >
       <div className="max-w-[1360px] mx-auto px-5 md:px-10 flex items-center justify-between">
         <motion.div initial="initial" animate="animate" variants={logoVariants}>
-          <Link
-            href="/"
-            aria-label="Go to home page"
-            className="flex items-center relative w-10 h-10"
-          >
-            <Image
-              src={settings?.logoUrl || "/logo.png"}
-              alt={`${settings?.websiteName || ""} Logo`}
-              fill
-              priority
-              unoptimized={
-                settings?.logoUrl?.includes("/storage/") ||
-                settings?.logoUrl?.endsWith(".svg")
-              }
-            />
-          </Link>
+          {settings === undefined ? (
+            <div className="relative w-10 h-10">
+              <Skeleton className="w-full h-full rounded-full" />
+            </div>
+          ) : (
+            <Link
+              href="/"
+              aria-label="Go to home page"
+              className="flex items-center relative w-10 h-10"
+            >
+              <Image
+                src={settings?.logoUrl || "/logo.png"}
+                alt={`${settings?.websiteName || ""} Logo`}
+                fill
+                priority
+                unoptimized={
+                  settings?.logoUrl?.includes("/storage/") ||
+                  settings?.logoUrl?.endsWith(".svg")
+                }
+              />
+            </Link>
+          )}
         </motion.div>
         <nav
           className="hidden md:flex items-center space-x-5"
           aria-label="Main navigation"
         >
-          {navLinks.map((link, i) => (
-            <motion.div
-              key={link.name}
-              custom={i}
-              initial="initial"
-              animate="animate"
-              variants={navItemVariants}
-              className="relative"
-            >
-              <Link
-                href={isProjectsPage ? `/${link.href}` : link.href}
-                className={cn(
-                  "text-sm sm:text-base font-medium transition-all px-1 pt-2 pb-1 relative group",
-                  link.id === "hero" && isProjectsPage
-                    ? "hover:text-primary"
-                    : activeSection === link.id
-                    ? "text-primary"
-                    : "hover:text-primary"
-                )}
-                aria-label={link.ariaLabel}
-                aria-current={activeSection === link.id ? "page" : undefined}
-              >
-                <span className="relative z-10">{link.name}</span>
-                <motion.span
-                  className="absolute bottom-0 left-0 w-full h-[2px] bg-primary/20 rounded-full"
-                  initial={{ width: 0 }}
-                  whileHover={{ width: "100%" }}
-                  transition={{ duration: 0.2 }}
-                />
-                {activeSection === link.id &&
-                  !(link.id === "hero" && isProjectsPage) && (
-                    <motion.div
-                      layoutId="activeSection"
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full"
-                      initial={{ opacity: 0, width: "30%" }}
-                      animate={{ opacity: 1, width: "100%" }}
-                      transition={{ duration: 0.3 }}
+          {settings === undefined
+            ? Array.from({ length: 5 }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  custom={i}
+                  initial="initial"
+                  animate="animate"
+                  variants={navItemVariants}
+                  className="relative"
+                >
+                  <Skeleton className="h-8 w-20" />
+                </motion.div>
+              ))
+            : navLinks.map((link, i) => (
+                <motion.div
+                  key={link.name}
+                  custom={i}
+                  initial="initial"
+                  animate="animate"
+                  variants={navItemVariants}
+                  className="relative"
+                >
+                  <Link
+                    href={isProjectsPage ? `/${link.href}` : link.href}
+                    className={cn(
+                      "text-sm sm:text-base font-medium transition-all px-1 pt-2 pb-1 relative group",
+                      link.id === "hero" && isProjectsPage
+                        ? "hover:text-primary"
+                        : activeSection === link.id
+                        ? "text-primary"
+                        : "hover:text-primary"
+                    )}
+                    aria-label={link.ariaLabel}
+                    aria-current={
+                      activeSection === link.id ? "page" : undefined
+                    }
+                  >
+                    <span className="relative z-10">{link.name}</span>
+                    <motion.span
+                      className="absolute bottom-0 left-0 w-full h-[2px] bg-primary/20 rounded-full"
+                      initial={{ width: 0 }}
+                      whileHover={{ width: "100%" }}
+                      transition={{ duration: 0.2 }}
                     />
-                  )}
-              </Link>
-            </motion.div>
-          ))}
+                    {activeSection === link.id &&
+                      !(link.id === "hero" && isProjectsPage) && (
+                        <motion.div
+                          layoutId="activeSection"
+                          className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full"
+                          initial={{ opacity: 0, width: "30%" }}
+                          animate={{ opacity: 1, width: "100%" }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                  </Link>
+                </motion.div>
+              ))}
         </nav>
         <div className="flex items-center md:hidden">
           <motion.div
@@ -320,64 +342,68 @@ export default function Navigation() {
             whileTap="whileTap"
             variants={themeToggleVariants}
           ></motion.div>
-          <motion.div
-            initial="initial"
-            animate="animate"
-            whileTap="whileTap"
-            variants={themeToggleVariants}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={isMobileMenuOpen}
-              aria-controls="mobile-menu"
-              className="relative group"
+          {settings === undefined ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+          ) : (
+            <motion.div
+              initial="initial"
+              animate="animate"
+              whileTap="whileTap"
+              variants={themeToggleVariants}
             >
-              <motion.div
-                className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                initial={{ scale: 0.8 }}
-                whileHover={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              />
-              <AnimatePresence mode="wait">
-                {isMobileMenuOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
-                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                    exit={{ rotate: 90, opacity: 0, scale: 0.8 }}
-                    transition={{
-                      duration: 0.2,
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                    }}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    <X className="h-6 w-6 text-primary" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0, scale: 0.8 }}
-                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                    exit={{ rotate: -90, opacity: 0, scale: 0.8 }}
-                    transition={{
-                      duration: 0.2,
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                    }}
-                    className="absolute inset-0 flex items-center justify-center"
-                  >
-                    <Menu className="h-6 w-6" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </Button>
-          </motion.div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-menu"
+                className="relative group"
+              >
+                <motion.div
+                  className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  initial={{ scale: 0.8 }}
+                  whileHover={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                />
+                <AnimatePresence mode="wait">
+                  {isMobileMenuOpen ? (
+                    <motion.div
+                      key="close"
+                      initial={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                      exit={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                      transition={{
+                        duration: 0.2,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <X className="h-6 w-6 text-primary" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="menu"
+                      initial={{ rotate: 90, opacity: 0, scale: 0.8 }}
+                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                      exit={{ rotate: -90, opacity: 0, scale: 0.8 }}
+                      transition={{
+                        duration: 0.2,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <Menu className="h-6 w-6" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Button>
+            </motion.div>
+          )}
         </div>
       </div>
       <AnimatePresence>
@@ -392,59 +418,73 @@ export default function Navigation() {
             aria-label="Mobile navigation"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col space-y-1 border-b">
-              {navLinks.map((link) => (
-                <motion.div
-                  key={link.name}
-                  variants={mobileNavItemVariants}
-                  className="overflow-hidden"
-                >
-                  <Link
-                    href={isProjectsPage ? `/${link.href}` : link.href}
-                    className={cn(
-                      "flex items-center text-sm font-medium py-3 px-3 rounded-md transition-all relative overflow-hidden",
-                      link.id === "hero" && isProjectsPage
-                        ? "hover:bg-primary/5"
-                        : activeSection === link.id
-                        ? "bg-primary/10 text-primary"
-                        : "hover:bg-primary/5"
-                    )}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    aria-label={link.ariaLabel}
-                    aria-current={
-                      activeSection === link.id ? "page" : undefined
-                    }
-                  >
+              {settings === undefined
+                ?
+                  Array.from({ length: 5 }).map((_, i) => (
                     <motion.div
-                      className="absolute inset-0 bg-primary/5 -z-10"
-                      initial={{ x: "-100%" }}
-                      whileHover={{ x: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                      className="flex items-center"
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ duration: 0.3 }}
+                      key={i}
+                      variants={mobileNavItemVariants}
+                      className="overflow-hidden"
                     >
-                      {link.name}
-                      {activeSection === link.id &&
-                        !(link.id === "hero" && isProjectsPage) && (
-                          <motion.div
-                            layoutId="activeMobileSection"
-                            className="ml-2 h-2 w-2 rounded-full bg-primary"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 20,
-                            }}
-                          />
-                        )}
+                      <div className="py-3 px-3 rounded-md">
+                        <Skeleton className="h-6 w-full" />
+                      </div>
                     </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
+                  ))
+                :
+                  navLinks.map((link) => (
+                    <motion.div
+                      key={link.name}
+                      variants={mobileNavItemVariants}
+                      className="overflow-hidden"
+                    >
+                      <Link
+                        href={isProjectsPage ? `/${link.href}` : link.href}
+                        className={cn(
+                          "flex items-center text-sm font-medium py-3 px-3 rounded-md transition-all relative overflow-hidden",
+                          link.id === "hero" && isProjectsPage
+                            ? "hover:bg-primary/5"
+                            : activeSection === link.id
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-primary/5"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        aria-label={link.ariaLabel}
+                        aria-current={
+                          activeSection === link.id ? "page" : undefined
+                        }
+                      >
+                        <motion.div
+                          className="absolute inset-0 bg-primary/5 -z-10"
+                          initial={{ x: "-100%" }}
+                          whileHover={{ x: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                        />
+                        <motion.div
+                          className="flex items-center"
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {link.name}
+                          {activeSection === link.id &&
+                            !(link.id === "hero" && isProjectsPage) && (
+                              <motion.div
+                                layoutId="activeMobileSection"
+                                className="ml-2 h-2 w-2 rounded-full bg-primary"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 300,
+                                  damping: 20,
+                                }}
+                              />
+                            )}
+                        </motion.div>
+                      </Link>
+                    </motion.div>
+                  ))}
             </div>
           </motion.nav>
         )}
