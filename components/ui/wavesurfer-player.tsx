@@ -5,7 +5,7 @@ import WaveSurfer from "wavesurfer.js";
 import { cn } from "@/lib/utils";
 import { Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
 interface WavesurferPlayerProps {
@@ -49,6 +49,64 @@ export function WavesurferPlayer({
   const [currentTime, setCurrentTime] = useState(initialTime || 0);
   const [duration, setDuration] = useState(0);
   const [isReady, setIsReady] = useState(false);
+  const audioProcessIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use a ref to track the current playing state to avoid closure issues
+  const isPlayingRef = useRef(isPlaying);
+
+  // Update the ref whenever the state changes
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  const startAudioProcessTracking = useCallback(() => {
+    if (audioProcessIntervalRef.current) {
+      clearInterval(audioProcessIntervalRef.current);
+    }
+
+    audioProcessIntervalRef.current = setInterval(() => {
+      if (wavesurferRef.current && isPlayingRef.current) {
+        try {
+          const currentTime = wavesurferRef.current.getCurrentTime();
+          setCurrentTime(currentTime);
+        } catch (error) {
+          console.warn("Error getting current time:", error);
+        }
+      }
+    }, 100); // Update every 100ms for smoother progress
+  }, []);
+
+  const stopAudioProcessTracking = useCallback(() => {
+    if (audioProcessIntervalRef.current) {
+      clearInterval(audioProcessIntervalRef.current);
+      audioProcessIntervalRef.current = null;
+    }
+  }, []);
+
+  const handlePlayPause = useCallback(() => {
+    if (!wavesurferRef.current || !isReady) return;
+
+    if (isPlayingRef.current) {
+      try {
+        wavesurferRef.current.pause();
+        setIsPlaying(false);
+        stopAudioProcessTracking();
+      } catch (error) {
+        console.warn("Error pausing audio:", error);
+        setIsPlaying(false);
+        stopAudioProcessTracking();
+      }
+    } else {
+      try {
+        wavesurferRef.current.play();
+        setIsPlaying(true);
+        startAudioProcessTracking();
+      } catch (error) {
+        console.warn("Error playing audio:", error);
+        setIsPlaying(false);
+      }
+    }
+  }, [isReady, startAudioProcessTracking, stopAudioProcessTracking]);
 
   useEffect(() => {
     let isMounted = true;
@@ -101,115 +159,49 @@ export function WavesurferPlayer({
             }
           }
 
-          wavesurfer.on("interaction", () => {
-            if (isPlaying) {
-              setTimeout(() => {
-                if (wavesurferRef.current) {
-                  try {
-                    wavesurferRef.current.play();
-                  } catch (error) {
-                    console.warn("Error resuming after interaction:", error);
-                  }
-                }
-              }, 50);
-            }
-          });
-
           onReady?.(wavesurfer);
 
           if (autoPlay) {
             try {
-              const playPromise = wavesurfer.play();
-              if (playPromise && typeof playPromise.catch === "function") {
-                playPromise.catch((err) => {
-                  console.warn("Playback was prevented:", err);
-                });
-              }
+              wavesurfer.play();
               setIsPlaying(true);
+              isPlayingRef.current = true;
+              startAudioProcessTracking();
             } catch (error) {
               console.warn("Error during autoplay:", error);
             }
           }
         });
 
-        wavesurfer.on("audioprocess", () => {
-          if (!isMounted) return;
-          setCurrentTime(wavesurfer.getCurrentTime());
-        });
-
-        wavesurfer.on("seeking", () => {
-          if (!isMounted) return;
-
-          const newTime = wavesurfer.getCurrentTime();
-          setCurrentTime(newTime);
-
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          const isSafari = /^((?!chrome|android).)*safari/i.test(
-            navigator.userAgent
-          );
-
-          if (isIOS || isSafari) {
-            if (isPlaying) {
-              setTimeout(() => {
-                if (wavesurferRef.current && isMounted) {
-                  try {
-                    wavesurferRef.current.play();
-                  } catch (error) {
-                    console.warn("Error resuming after seek:", error);
-                  }
-                }
-              }, 100);
-            }
-          }
-        });
-
         wavesurfer.on("play", () => {
           if (!isMounted) return;
-          setTimeout(() => {
-            setIsPlaying(true);
-            onPlay?.();
-          }, 10);
+          setIsPlaying(true);
+          isPlayingRef.current = true;
+          startAudioProcessTracking();
+          onPlay?.();
         });
 
         wavesurfer.on("pause", () => {
           if (!isMounted) return;
-          setTimeout(() => {
-            setIsPlaying(false);
-            onPause?.();
-          }, 10);
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          stopAudioProcessTracking();
+          onPause?.();
         });
 
         wavesurfer.on("finish", () => {
           if (!isMounted) return;
-          setTimeout(() => {
-            setIsPlaying(false);
-            onFinish?.();
-          }, 10);
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          stopAudioProcessTracking();
+          setCurrentTime(wavesurfer.getDuration());
+          onFinish?.();
         });
 
-        wavesurfer.on("interaction", () => {
+        wavesurfer.on("seeking", () => {
           if (!isMounted) return;
-
-          setCurrentTime(wavesurfer.getCurrentTime());
-
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          const isSafari = /^((?!chrome|android).)*safari/i.test(
-            navigator.userAgent
-          );
-
-          if (isIOS || isSafari) {
-            if (isPlaying) {
-              setTimeout(() => {
-                if (wavesurferRef.current && isMounted) {
-                  try {
-                    wavesurferRef.current.play();
-                  } catch (error) {
-                    console.warn("Error resuming after interaction:", error);
-                  }
-                }
-              }, 100);
-            }
-          }
+          const newTime = wavesurfer.getCurrentTime();
+          setCurrentTime(newTime);
         });
 
         wavesurfer.on("error", (err) => {
@@ -241,6 +233,7 @@ export function WavesurferPlayer({
     return () => {
       isMounted = false;
       clearTimeout(initTimeout);
+      stopAudioProcessTracking();
 
       if (wavesurferRef.current) {
         try {
@@ -266,60 +259,9 @@ export function WavesurferPlayer({
     onPlay,
     onPause,
     onFinish,
-    isPlaying,
+    startAudioProcessTracking,
+    stopAudioProcessTracking,
   ]);
-
-  const handlePlayPause = () => {
-    if (!wavesurferRef.current || !isReady) return;
-
-    if (isPlaying) {
-      try {
-        wavesurferRef.current.pause();
-        setTimeout(() => {
-          setIsPlaying(false);
-        }, 10);
-      } catch (error) {
-        console.warn("Error pausing audio:", error);
-        setIsPlaying(false);
-      }
-    } else {
-      try {
-        const playPromise = wavesurferRef.current.play();
-
-        if (playPromise && typeof playPromise.then === "function") {
-          playPromise
-            .then(() => {
-              setTimeout(() => {
-                setIsPlaying(true);
-              }, 10);
-            })
-            .catch((error) => {
-              console.warn("Error playing audio:", error);
-              setIsPlaying(false);
-            });
-        } else {
-          setTimeout(() => {
-            setIsPlaying(true);
-          }, 10);
-        }
-      } catch (error) {
-        console.warn("Error playing audio:", error);
-        setIsPlaying(false);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (!wavesurferRef.current || !isReady) return;
-
-    if (autoPlay && !isPlaying) {
-      try {
-        wavesurferRef.current.play();
-      } catch (error) {
-        console.warn("Error auto-playing audio:", error);
-      }
-    }
-  }, [autoPlay, isReady, isPlaying]);
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
@@ -338,11 +280,7 @@ export function WavesurferPlayer({
           className={`h-8 w-8 rounded-full ${
             isPlaying ? "bg-primary text-primary-foreground" : ""
           }`}
-          onClick={() => {
-            setTimeout(() => {
-              handlePlayPause();
-            }, 10);
-          }}
+          onClick={handlePlayPause}
           disabled={!isReady}
         >
           {isPlaying ? (
@@ -361,22 +299,6 @@ export function WavesurferPlayer({
             ref={containerRef}
             className="w-full cursor-pointer"
             style={{ height: `${height}px` }}
-            onClick={() => {
-              if (wavesurferRef.current && isReady && isPlaying) {
-                setTimeout(() => {
-                  if (wavesurferRef.current && isPlaying) {
-                    try {
-                      wavesurferRef.current.play();
-                    } catch (error) {
-                      console.warn(
-                        "Error resuming after waveform click:",
-                        error
-                      );
-                    }
-                  }
-                }, 50);
-              }
-            }}
           />
         </div>
 
