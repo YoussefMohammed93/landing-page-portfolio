@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
 import { useThemeColor } from "@/hooks/use-theme-color";
 
+// Extended interface for WaveSurfer with internal properties
+interface WaveSurferExtended extends WaveSurfer {
+  backend?: {
+    ac?: {
+      suspend: () => void;
+      resume: () => void;
+    };
+  };
+  getBackend?: () => string;
+}
+
 interface WavesurferPlayerProps {
   audioSrc: string;
   className?: string;
@@ -44,7 +55,7 @@ export function WavesurferPlayer({
   const primaryColor = useThemeColor("primary");
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const wavesurferRef = useRef<WaveSurferExtended | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(initialTime || 0);
   const [duration, setDuration] = useState(0);
@@ -274,10 +285,36 @@ export function WavesurferPlayer({
 
     if (isPlaying) {
       try {
-        wavesurferRef.current.pause();
-        setTimeout(() => {
+        // Check if Safari or iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(
+          navigator.userAgent
+        );
+
+        // Force pause for Safari/iOS
+        if (isIOS || isSafari) {
+          // First ensure the audio context is suspended
+          if (
+            wavesurferRef.current.getBackend &&
+            wavesurferRef.current.getBackend() === "WebAudio" &&
+            wavesurferRef.current.backend &&
+            wavesurferRef.current.backend.ac
+          ) {
+            wavesurferRef.current.backend.ac.suspend();
+          }
+
+          // Then call pause
+          wavesurferRef.current.pause();
+
+          // Force update state immediately for Safari
           setIsPlaying(false);
-        }, 10);
+        } else {
+          // Normal pause for other browsers
+          wavesurferRef.current.pause();
+          setTimeout(() => {
+            setIsPlaying(false);
+          }, 10);
+        }
       } catch (error) {
         console.warn("Error pausing audio:", error);
         setIsPlaying(false);
@@ -338,10 +375,23 @@ export function WavesurferPlayer({
           className={`h-8 w-8 rounded-full ${
             isPlaying ? "bg-primary text-primary-foreground" : ""
           }`}
-          onClick={() => {
-            setTimeout(() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // For Safari, call immediately without timeout
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(
+              navigator.userAgent
+            );
+
+            if (isIOS || isSafari) {
               handlePlayPause();
-            }, 10);
+            } else {
+              setTimeout(() => {
+                handlePlayPause();
+              }, 10);
+            }
           }}
           disabled={!isReady}
         >
@@ -362,10 +412,27 @@ export function WavesurferPlayer({
             className="w-full cursor-pointer"
             style={{ height: `${height}px` }}
             onClick={() => {
-              if (wavesurferRef.current && isReady && isPlaying) {
-                setTimeout(() => {
-                  if (wavesurferRef.current && isPlaying) {
+              if (wavesurferRef.current && isReady) {
+                // Check if Safari or iOS
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const isSafari = /^((?!chrome|android).)*safari/i.test(
+                  navigator.userAgent
+                );
+
+                if (isIOS || isSafari) {
+                  // For Safari, handle click differently
+                  if (isPlaying) {
+                    // If playing, ensure it continues playing after interaction
                     try {
+                      if (
+                        wavesurferRef.current.getBackend &&
+                        wavesurferRef.current.getBackend() === "WebAudio" &&
+                        wavesurferRef.current.backend &&
+                        wavesurferRef.current.backend.ac
+                      ) {
+                        // Resume audio context if needed
+                        wavesurferRef.current.backend.ac.resume();
+                      }
                       wavesurferRef.current.play();
                     } catch (error) {
                       console.warn(
@@ -374,7 +441,23 @@ export function WavesurferPlayer({
                       );
                     }
                   }
-                }, 50);
+                } else {
+                  // For other browsers
+                  if (isPlaying) {
+                    setTimeout(() => {
+                      if (wavesurferRef.current && isPlaying) {
+                        try {
+                          wavesurferRef.current.play();
+                        } catch (error) {
+                          console.warn(
+                            "Error resuming after waveform click:",
+                            error
+                          );
+                        }
+                      }
+                    }, 50);
+                  }
+                }
               }
             }}
           />
