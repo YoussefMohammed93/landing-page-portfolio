@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Upload, X, Loader2, Music } from "lucide-react";
+import { SafariCompatibleAudioPlayer } from "@/components/ui/safari-compatible-audio-player";
 
 interface AudioUploadProps {
   value: string;
@@ -104,18 +105,7 @@ export function AudioUpload({
                 </div>
               </div>
               <div className="w-full mt-3 sm:mt-0">
-                <audio
-                  controls
-                  className="w-full max-w-full"
-                  style={{
-                    minWidth: "100%",
-                    maxWidth: "100%",
-                    height: "40px",
-                  }}
-                >
-                  <source src={value} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
+                <SafariCompatibleAudioPlayer audioSrc={value} />
               </div>
             </div>
           </div>
