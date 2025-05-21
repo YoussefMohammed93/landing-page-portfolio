@@ -15,8 +15,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "convex/react";
 import { Input } from "@/components/ui/input";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { useSectionVisibility } from "@/hooks/use-settings";
 import { useSectionTitles } from "./section-titles-provider";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
@@ -59,8 +62,21 @@ export function Footer() {
   const [isSubscribed, setIsSubscribed] = useState(false);
 
   const { sectionTitles } = useSectionTitles();
+  const { isSectionVisible } = useSectionVisibility();
+  const settings = useQuery(api.settings.getSettings);
 
-  const navLinks = baseNavLinks.map((link) => {
+  const heroContentQuery = useQuery(api.hero.getHeroContent);
+
+  const heroContent = heroContentQuery || {
+    description:
+      "We create stunning videos, animations, and music that help brands stand out in the crowded social media landscape.",
+  };
+
+  const filteredBaseNavLinks = baseNavLinks.filter((link) => {
+    return isSectionVisible(link.id);
+  });
+
+  const navLinks = filteredBaseNavLinks.map((link) => {
     if (sectionTitles[link.id]) {
       return {
         ...link,
@@ -100,18 +116,19 @@ export function Footer() {
               staggerAmount={0.1}
             >
               <div className="space-y-4">
-                <Link href="/" className="inline-block">
+                <Link href="/" className="inline-block relative w-11 h-11">
                   <Image
-                    src="/logo.png"
-                    alt="Media Team Logo"
-                    width={42}
-                    height={42}
-                    className="h-auto w-auto"
+                    src={settings?.logoUrl || "/logo.png"}
+                    alt={`${settings?.websiteName || ""} Logo`}
+                    fill
+                    unoptimized={
+                      settings?.logoUrl?.includes("/storage/") ||
+                      settings?.logoUrl?.endsWith(".svg")
+                    }
                   />
                 </Link>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  We create stunning videos, animations, and music that help
-                  brands stand out in the crowded social media landscape.
+                  {heroContent.description}
                 </p>
               </div>
               <div className="flex gap-4">
@@ -251,7 +268,9 @@ export function Footer() {
         </AnimatedSection>
         <div className="h-px bg-border/50 my-8"></div>
         <div className="flex justify-center items-center gap-4 text-sm text-muted-foreground">
-          <p>© {currentYear} Media Team. All rights reserved.</p>
+          <p>
+            © {currentYear} {settings?.websiteName || ""}. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

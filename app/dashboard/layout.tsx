@@ -24,6 +24,8 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +35,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const settings = useQuery(api.settings.getSettings);
 
   const isActive = (path: string) => {
     if (path === "/dashboard" && pathname === "/dashboard") {
@@ -44,53 +47,91 @@ export default function DashboardLayout({
     return false;
   };
 
-  const navigationItems = [
+  const baseNavigationItems = [
     {
       name: "Hero",
       href: "/dashboard/hero",
       icon: <ImageIcon className="size-4" />,
+      id: "hero",
+      alwaysVisible: true,
     },
     {
       name: "Video Editing",
       href: "/dashboard/video-editing",
       icon: <Video className="size-4" />,
+      id: "video-editing",
+      alwaysVisible: false,
     },
     {
       name: "2D Animations",
       href: "/dashboard/2d-animations",
       icon: <Layers className="size-4" />,
+      id: "2d-animations",
+      alwaysVisible: false,
     },
     {
       name: "3D Animations",
       href: "/dashboard/3d-animations",
       icon: <Film className="size-4" />,
+      id: "3d-animations",
+      alwaysVisible: false,
     },
     {
       name: "Music",
       href: "/dashboard/music",
       icon: <Music className="size-4" />,
+      id: "music",
+      alwaysVisible: false,
     },
     {
       name: "Settings",
       href: "/dashboard/settings",
       icon: <Settings className="size-4" />,
+      id: "settings",
+      alwaysVisible: true,
     },
   ];
+
+  const navigationItems = baseNavigationItems.filter((item) => {
+    if (item.alwaysVisible) return true;
+
+    if (!settings) return true;
+
+    const { sectionVisibility } = settings;
+
+    switch (item.id) {
+      case "video-editing":
+        return sectionVisibility.videoEditing;
+      case "2d-animations":
+        return sectionVisibility.twoDAnimations;
+      case "3d-animations":
+        return sectionVisibility.threeDAnimations;
+      case "music":
+        return sectionVisibility.music;
+      default:
+        return true;
+    }
+  });
 
   return (
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen w-full">
         <Sidebar>
           <SidebarHeader className="flex h-[57px] border-b px-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="flex items-center gap-2 relative w-10 h-10"
+            >
               <Image
-                src="/logo.png"
-                alt="Media Team Logo"
-                width={28}
-                height={28}
-                className="h-auto w-auto"
+                src={settings?.logoUrl || "/logo.png"}
+                alt={`${settings?.websiteName || ""} Logo`}
+                fill
+                className="object-contain"
+                unoptimized={
+                  settings?.logoUrl?.includes("/storage/") ||
+                  settings?.logoUrl?.endsWith(".svg")
+                }
               />
-              <span className="font-semibold">Dashboard</span>
             </Link>
           </SidebarHeader>
           <SidebarContent>

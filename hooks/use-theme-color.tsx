@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { oklchToHex, isValidOklch } from "@/lib/color-utils";
 
 /**
  * Parse OKLCH color string to RGB
@@ -83,10 +84,23 @@ function cssColorToRGB(
   try {
     // Check if it's an OKLCH color
     if (colorStr.startsWith("oklch")) {
-      // Try our manual OKLCH parser first
-      const oklchResult = parseOklchToRgb(colorStr);
-      if (oklchResult) {
-        return oklchResult;
+      if (isValidOklch(colorStr)) {
+        // Convert OKLCH to hex using our improved utility
+        const hexColor = oklchToHex(colorStr);
+
+        // Then convert hex to RGB
+        if (hexColor.startsWith("#") && hexColor.length === 7) {
+          const r = parseInt(hexColor.slice(1, 3), 16) / 255;
+          const g = parseInt(hexColor.slice(3, 5), 16) / 255;
+          const b = parseInt(hexColor.slice(5, 7), 16) / 255;
+          return { r, g, b };
+        }
+      } else {
+        // Try our manual OKLCH parser as fallback
+        const oklchResult = parseOklchToRgb(colorStr);
+        if (oklchResult) {
+          return oklchResult;
+        }
       }
     }
 
@@ -115,7 +129,8 @@ function cssColorToRGB(
     // If we get here, neither method worked
     // Return a default purple color similar to the primary in your theme
     return { r: 0.5, g: 0.2, b: 0.8 };
-  } catch {
+  } catch (error) {
+    console.error("Error converting color to RGB:", error);
     // Return a default purple color
     return { r: 0.5, g: 0.2, b: 0.8 };
   }
@@ -169,7 +184,51 @@ export function useThemeColor(variableName: string): string {
 
         lastValueRef.current = value;
 
-        // Convert to RGB
+        // For OKLCH colors, try to use our improved conversion
+        if (value.startsWith("oklch") && isValidOklch(value)) {
+          try {
+            // Special case for red colors in OKLCH
+            const match = value.match(
+              /oklch\(\s*([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)(?:\s*\/\s*([0-9.]+))?\s*\)/i
+            );
+
+            if (match) {
+              const H = parseFloat(match[3]);
+              const C = parseFloat(match[2]);
+
+              // If it's a red hue (around 25-30 degrees) with sufficient chroma
+              if (H >= 20 && H <= 35 && C > 0.2) {
+                const L = parseFloat(match[1]);
+                // Use direct hex values for red colors
+                let redHex;
+                if (L > 0.6) {
+                  redHex = "#ff0000"; // Bright red
+                } else if (L > 0.4) {
+                  redHex = "#cc0000"; // Medium red
+                } else {
+                  redHex = "#990000"; // Dark red
+                }
+
+                if (redHex !== color) {
+                  setColor(redHex);
+                }
+                return;
+              }
+            }
+
+            // For other colors, use the standard conversion
+            const hexValue = oklchToHex(value);
+            if (hexValue !== color) {
+              setColor(hexValue);
+            }
+            return;
+          } catch (e) {
+            console.error("Error converting OKLCH to hex:", e);
+            // Continue to fallback methods
+          }
+        }
+
+        // Convert to RGB using fallback methods
         const rgb = cssColorToRGB(value);
 
         if (rgb) {
@@ -184,7 +243,8 @@ export function useThemeColor(variableName: string): string {
           // Use default purple color
           setColor("#8033cc");
         }
-      } catch {
+      } catch (error) {
+        console.error("Error updating theme color:", error);
         // Use default purple color on error
         setColor("#8033cc");
       }

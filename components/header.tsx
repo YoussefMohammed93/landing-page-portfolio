@@ -5,10 +5,13 @@ import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSectionTitles } from "./section-titles-provider";
+import { useSectionVisibility } from "@/hooks/use-settings";
 
 function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
@@ -103,6 +106,8 @@ export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const { sectionTitles } = useSectionTitles();
+  const { isSectionVisible } = useSectionVisibility();
+  const settings = useQuery(api.settings.getSettings);
 
   const baseNavLinks = [
     {
@@ -143,7 +148,13 @@ export default function Navigation() {
     },
   ];
 
-  const navLinks = baseNavLinks.map((link) => {
+  const filteredBaseNavLinks = baseNavLinks.filter((link) => {
+    if (link.id === "hero" || link.id === "contact") return true;
+
+    return isSectionVisible(link.id);
+  });
+
+  const navLinks = filteredBaseNavLinks.map((link) => {
     if (sectionTitles[link.id]) {
       return {
         ...link,
@@ -235,15 +246,17 @@ export default function Navigation() {
           <Link
             href="/"
             aria-label="Go to home page"
-            className="flex items-center"
+            className="flex items-center relative w-10 h-10"
           >
             <Image
-              src="/logo.png"
-              alt="Media Team Logo"
-              width={36}
-              height={36}
-              className="h-auto w-auto"
+              src={settings?.logoUrl || "/logo.png"}
+              alt={`${settings?.websiteName || ""} Logo`}
+              fill
               priority
+              unoptimized={
+                settings?.logoUrl?.includes("/storage/") ||
+                settings?.logoUrl?.endsWith(".svg")
+              }
             />
           </Link>
         </motion.div>

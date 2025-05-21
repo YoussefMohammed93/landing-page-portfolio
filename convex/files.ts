@@ -98,6 +98,8 @@ export const saveImage = action({
         result = await ctx.runMutation(api.hero.updateHeroImage, {
           imageUrl: url,
         });
+      } else if (args.destination === "settings") {
+        result = { success: true };
       } else {
         result = await ctx.runMutation(api.hero.updateHeroImage, {
           imageUrl: url,

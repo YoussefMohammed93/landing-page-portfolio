@@ -1,5 +1,5 @@
-import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { defineSchema, defineTable } from "convex/server";
 
 export default defineSchema({
   hero: defineTable({
@@ -71,4 +71,17 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_updatedAt", ["updatedAt"]),
+
+  settings: defineTable({
+    websiteName: v.string(),
+    logoUrl: v.string(),
+    primaryColor: v.string(),
+    sectionVisibility: v.object({
+      videoEditing: v.boolean(),
+      twoDAnimations: v.boolean(),
+      threeDAnimations: v.boolean(),
+      music: v.boolean(),
+    }),
+    updatedAt: v.number(),
+  }),
 });
