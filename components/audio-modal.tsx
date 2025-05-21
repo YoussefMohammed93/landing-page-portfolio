@@ -4,9 +4,9 @@ import Image from "next/image";
 
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Play, Pause, Volume2 } from "lucide-react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
 
 type AudioModalProps = {
@@ -64,11 +64,18 @@ export function AudioModal({
       audioRef.current.currentTime = 0;
       setCurrentTime(0);
 
-      audioRef.current.play().catch((error) => {
-        console.error("Error playing audio:", error);
-        setIsPlaying(false);
-      });
-      setIsPlaying(true);
+      setTimeout(() => {
+        if (audioRef.current) {
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.error("Error playing audio on modal open:", error);
+              setIsPlaying(false);
+            });
+          }
+          setIsPlaying(true);
+        }
+      }, 100);
     }
   }, [isOpen]);
 
@@ -83,10 +90,26 @@ export function AudioModal({
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing audio:", error);
-          setIsPlaying(false);
-        });
+        const playWithRetry = () => {
+          const playPromise = audioRef.current?.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.error("Error playing audio:", error);
+
+              if (error.name === "NotAllowedError") {
+                setIsPlaying(false);
+              } else {
+                setTimeout(() => {
+                  if (audioRef.current && isPlaying) {
+                    playWithRetry();
+                  }
+                }, 100);
+              }
+            });
+          }
+        };
+
+        playWithRetry();
         animationRef.current = requestAnimationFrame(updateProgress);
       } else {
         audioRef.current.pause();
@@ -95,6 +118,12 @@ export function AudioModal({
         }
       }
     }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [isPlaying, updateProgress]);
 
   const togglePlay = () => {
@@ -103,8 +132,26 @@ export function AudioModal({
 
   const handleTimeChange = (value: number[]) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
+      const newTime = value[0];
+      const wasPlaying = !audioRef.current.paused;
+
+      setCurrentTime(newTime);
+
+      if (wasPlaying) {
+        audioRef.current.pause();
+      }
+
+      audioRef.current.currentTime = newTime;
+
+      if (wasPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Error resuming playback after seeking:", error);
+            setIsPlaying(false);
+          });
+        }
+      }
     }
   };
 
@@ -172,6 +219,12 @@ export function AudioModal({
                 max={duration2 || 100}
                 step={0.1}
                 onValueChange={handleTimeChange}
+                onValueCommit={(value) => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = value[0];
+                    setCurrentTime(value[0]);
+                  }
+                }}
                 className="w-full"
               />
             </div>
@@ -212,6 +265,17 @@ export function AudioModal({
               setDuration2(audioRef.current.duration);
             }
           }}
+          onSeeking={() => {
+            if (audioRef.current) {
+              setCurrentTime(audioRef.current.currentTime);
+            }
+          }}
+          onSeeked={() => {
+            if (audioRef.current) {
+              setCurrentTime(audioRef.current.currentTime);
+            }
+          }}
+          preload="auto"
           className="hidden"
         />
       </CustomDialogContent>

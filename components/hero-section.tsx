@@ -6,10 +6,10 @@ import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { ArrowRight, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRef, useState, useEffect } from "react";
 import { useAnimation } from "./animation-provider";
-import { ArrowRight, Star, Circle } from "lucide-react";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 
 export function HeroSection() {
@@ -164,17 +164,6 @@ export function HeroSection() {
                       <span className="bg-gradient-to-r from-primary/90 via-primary to-primary/90 bg-clip-text text-transparent">
                         {heroContent.highlightedText}
                       </span>
-                      <motion.span
-                        className="hidden md:block absolute -right-6 top-3 text-primary"
-                        animate={{ rotate: [0, 15, 0] }}
-                        transition={{
-                          duration: shouldReduceAnimations ? 7 : 5,
-                          repeat: Infinity,
-                          ease: shouldReduceAnimations ? "linear" : "easeInOut",
-                        }}
-                      >
-                        <Star className="h-5 w-5 fill-primary" />
-                      </motion.span>
                     </motion.span>
                   </h1>
                   <p className="text-xl md:text-2xl text-muted-foreground max-w-[600px] leading-relaxed">

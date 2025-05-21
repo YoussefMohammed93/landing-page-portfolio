@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
 import { getStorageIdFromUrl } from "./files";
+import { mutation, query } from "./_generated/server";
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -69,7 +69,18 @@ export const updateLogo = mutation({
     if (existingSettings && existingSettings.logoUrl.includes("/storage/")) {
       const oldStorageId = getStorageIdFromUrl(existingSettings.logoUrl);
       if (oldStorageId) {
-        await ctx.storage.delete(oldStorageId);
+        try {
+          await ctx.storage.delete(oldStorageId).catch((error) => {
+            console.warn(
+              `Storage ID ${oldStorageId} not found or couldn't be deleted: ${error.message}`
+            );
+          });
+        } catch (storageError) {
+          console.warn(
+            `Error deleting old logo with storage ID ${oldStorageId}:`,
+            storageError
+          );
+        }
       }
     }
 
@@ -171,7 +182,18 @@ export const updateAllSettings = mutation({
     ) {
       const oldStorageId = getStorageIdFromUrl(existingSettings.logoUrl);
       if (oldStorageId) {
-        await ctx.storage.delete(oldStorageId);
+        try {
+          await ctx.storage.delete(oldStorageId).catch((error) => {
+            console.warn(
+              `Storage ID ${oldStorageId} not found or couldn't be deleted: ${error.message}`
+            );
+          });
+        } catch (storageError) {
+          console.warn(
+            `Error deleting old logo with storage ID ${oldStorageId}:`,
+            storageError
+          );
+        }
       }
     }
 

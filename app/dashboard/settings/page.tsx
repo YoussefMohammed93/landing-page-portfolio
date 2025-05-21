@@ -196,7 +196,12 @@ export default function SettingsPage() {
             settings.logoUrl !== logoUrl
           ) {
             try {
-              await deleteFile({ url: settings.logoUrl });
+              const result = await deleteFile({ url: settings.logoUrl });
+              if (!result.success) {
+                console.warn(
+                  "Failed to delete old logo, but continuing with update"
+                );
+              }
             } catch (deleteError) {
               console.error("Error deleting old logo:", deleteError);
             }

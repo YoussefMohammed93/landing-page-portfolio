@@ -153,9 +153,14 @@ export default function HeroPage() {
             originalData.imageUrl !== finalImageUrl
           ) {
             try {
-              await deleteFile({ url: originalData.imageUrl });
+              const result = await deleteFile({ url: originalData.imageUrl });
+              if (!result.success) {
+                console.warn(
+                  "Failed to delete old hero image, but continuing with update"
+                );
+              }
             } catch (deleteError) {
-              console.error("Error deleting old image:", deleteError);
+              console.error("Error deleting old hero image:", deleteError);
             }
           }
         } catch (error) {

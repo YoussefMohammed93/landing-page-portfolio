@@ -128,7 +128,19 @@ export const deleteFile = action({
         return { success: true };
       }
 
-      await ctx.storage.delete(storageId);
+      try {
+        await ctx.storage.delete(storageId).catch((error) => {
+          console.warn(
+            `Storage ID ${storageId} not found or couldn't be deleted: ${error.message}`
+          );
+        });
+      } catch (storageError) {
+        console.warn(
+          `Error accessing storage ID ${storageId}, may not exist:`,
+          storageError
+        );
+        return { success: true };
+      }
 
       return { success: true };
     } catch (error) {

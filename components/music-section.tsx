@@ -59,18 +59,52 @@ export function MusicSection() {
 
   const handleTimeChange = (value: number[]) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
+      const newTime = value[0];
+      const wasPlaying = !audioRef.current.paused;
+
+      setCurrentTime(newTime);
+
+      if (wasPlaying) {
+        audioRef.current.pause();
+      }
+
+      audioRef.current.currentTime = newTime;
+
+      if (wasPlaying) {
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Error resuming playback after seeking:", error);
+            setIsPlaying(false);
+          });
+        }
+      }
     }
   };
 
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch((error) => {
-          console.error("Error playing audio:", error);
-          setIsPlaying(false);
-        });
+        const playWithRetry = () => {
+          const playPromise = audioRef.current?.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.error("Error playing audio:", error);
+
+              if (error.name === "NotAllowedError") {
+                setIsPlaying(false);
+              } else {
+                setTimeout(() => {
+                  if (audioRef.current && isPlaying) {
+                    playWithRetry();
+                  }
+                }, 100);
+              }
+            });
+          }
+        };
+
+        playWithRetry();
         animationRef.current = requestAnimationFrame(updateProgress);
       } else {
         audioRef.current.pause();
@@ -79,19 +113,59 @@ export function MusicSection() {
         }
       }
     }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [isPlaying, activeTrack, updateProgress]);
 
   const togglePlay = (trackId: Id<"musicTracks">, audioUrl: string) => {
     if (activeTrack === trackId) {
-      setIsPlaying(!isPlaying);
+      if (audioRef.current) {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          const playPromise = audioRef.current.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.error("Error playing audio:", error);
+              setIsPlaying(false);
+            });
+          }
+          setIsPlaying(true);
+        }
+      }
     } else {
       setActiveTrack(trackId);
       if (audioRef.current) {
+        const wasPlaying = isPlaying;
+
         audioRef.current.src = audioUrl;
+
+        const handleCanPlay = () => {
+          setCurrentTime(0);
+          if (wasPlaying) {
+            const playPromise = audioRef.current?.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.error("Error playing new track:", error);
+                setIsPlaying(false);
+              });
+            }
+          }
+          audioRef.current?.removeEventListener(
+            "canplaythrough",
+            handleCanPlay
+          );
+        };
+
+        audioRef.current.addEventListener("canplaythrough", handleCanPlay);
         audioRef.current.load();
-        setCurrentTime(0);
+        setIsPlaying(true);
       }
-      setIsPlaying(true);
     }
   };
 
@@ -109,6 +183,17 @@ export function MusicSection() {
             setDuration(audioRef.current.duration);
           }
         }}
+        onSeeking={() => {
+          if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+          }
+        }}
+        onSeeked={() => {
+          if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+          }
+        }}
+        preload="auto"
       />
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-primary/10 blur-3xl rounded-full"></div>
@@ -243,6 +328,12 @@ export function MusicSection() {
                                     max={duration || 100}
                                     step={0.1}
                                     onValueChange={handleTimeChange}
+                                    onValueCommit={(value) => {
+                                      if (audioRef.current) {
+                                        audioRef.current.currentTime = value[0];
+                                        setCurrentTime(value[0]);
+                                      }
+                                    }}
                                     className="w-full"
                                   />
                                 </div>
