@@ -32,7 +32,8 @@ export function VideoSection() {
     const match = url.match(regExp);
 
     if (match && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}`;
+      // Add parameters for better Safari compatibility
+      return `https://www.youtube.com/embed/${match[2]}?playsinline=1&rel=0&modestbranding=1`;
     }
 
     return url;

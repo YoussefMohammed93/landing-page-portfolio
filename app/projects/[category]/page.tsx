@@ -30,7 +30,8 @@ const getYouTubeEmbedUrl = (url: string) => {
   const match = url.match(regExp);
 
   if (match && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}`;
+    // Add parameters for better Safari compatibility
+    return `https://www.youtube.com/embed/${match[2]}?playsinline=1&rel=0&modestbranding=1`;
   }
 
   return url;
@@ -294,7 +295,7 @@ export default function ProjectsPage() {
                             variant="ghost"
                             className="h-10 w-10 rounded-full bg-primary hover:!bg-primary text-primary-foreground"
                             onClick={(e) => {
-                              e.stopPropagation(); // Prevent the parent onClick from firing
+                              e.stopPropagation();
                               setSelectedAudio({
                                 id: project._id,
                                 title: project.title,

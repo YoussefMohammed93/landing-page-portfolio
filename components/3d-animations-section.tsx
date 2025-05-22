@@ -35,7 +35,8 @@ export function ThreeDAnimationsSection() {
   const getYouTubeEmbedUrl = (url: string) => {
     const videoId = getYouTubeVideoId(url);
     if (!videoId) return "";
-    return `https://www.youtube.com/embed/${videoId}`;
+    // Add parameters for better Safari compatibility
+    return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1`;
   };
 
   const getYouTubeVideoId = (url: string) => {

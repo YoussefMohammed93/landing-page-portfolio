@@ -1,8 +1,8 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
 
@@ -20,6 +20,9 @@ export function VideoModal({
   videoTitle,
 }: VideoModalProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,6 +39,26 @@ export function VideoModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const enhancedVideoSrc = videoSrc.includes("youtube.com/embed")
+    ? `${videoSrc}${videoSrc.includes("?") ? "&" : "?"}playsinline=1&rel=0&modestbranding=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}`
+    : videoSrc;
+
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setLoadError(false);
+  };
+
+  const handleIframeError = () => {
+    setLoadError(true);
+
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.src = enhancedVideoSrc;
+      }
+    }, 1000);
+  };
 
   if (!isMounted) return null;
 
@@ -54,12 +77,25 @@ export function VideoModal({
               <X className="size-5" />
               <span className="sr-only">Close</span>
             </Button>
+            {(!iframeLoaded || loadError) && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                <div className="animate-pulse text-primary">
+                  {loadError
+                    ? "Error loading video. Retrying..."
+                    : "Loading video..."}
+                </div>
+              </div>
+            )}
             <iframe
-              src={videoSrc}
+              ref={iframeRef}
+              src={enhancedVideoSrc}
               title={videoTitle}
               className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+              loading="eager"
             ></iframe>
           </div>
         </div>
