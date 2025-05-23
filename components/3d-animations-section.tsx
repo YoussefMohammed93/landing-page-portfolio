@@ -20,7 +20,7 @@ export function ThreeDAnimationsSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
     id: Id<"threeDAnimationsProjects"> | number;
     title: string;
-    videoSrc: string;
+    videoUrl: string;
   } | null>(null);
 
   // State to track which video is being preloaded
@@ -187,7 +187,7 @@ export function ThreeDAnimationsSection() {
                     setSelectedVideo({
                       id: project._id,
                       title: project.title,
-                      videoSrc: getYouTubeEmbedUrl(project.videoUrl),
+                      videoUrl: project.videoUrl,
                     })
                   }
                   onMouseEnter={() => {
@@ -288,7 +288,7 @@ export function ThreeDAnimationsSection() {
         <VideoModal
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
-          videoSrc={selectedVideo.videoSrc}
+          videoSrc={selectedVideo.videoUrl}
           videoTitle={selectedVideo.title}
         />
       )}

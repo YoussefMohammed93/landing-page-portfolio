@@ -20,7 +20,7 @@ export function TwoDAnimationsSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
     id: Id<"twoDAnimationsProjects"> | number;
     title: string;
-    videoSrc: string;
+    videoUrl: string;
   } | null>(null);
 
   // State to track which video is being preloaded
@@ -187,7 +187,7 @@ export function TwoDAnimationsSection() {
                     setSelectedVideo({
                       id: project._id,
                       title: project.title,
-                      videoSrc: getYouTubeEmbedUrl(project.videoUrl),
+                      videoUrl: project.videoUrl,
                     })
                   }
                   onMouseEnter={() => {
@@ -285,8 +285,8 @@ export function TwoDAnimationsSection() {
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
           videoSrc={
-            typeof selectedVideo.videoSrc === "string"
-              ? selectedVideo.videoSrc
+            typeof selectedVideo.videoUrl === "string"
+              ? selectedVideo.videoUrl
               : ""
           }
           videoTitle={selectedVideo.title}

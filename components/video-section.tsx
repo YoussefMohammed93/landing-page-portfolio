@@ -20,7 +20,7 @@ export function VideoSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
     id: Id<"videoProjects"> | number;
     title: string;
-    videoSrc: string;
+    videoUrl: string;
   } | null>(null);
 
   // State to track which video is being preloaded
@@ -182,7 +182,7 @@ export function VideoSection() {
                     setSelectedVideo({
                       id: project._id,
                       title: project.title,
-                      videoSrc: getYouTubeEmbedUrl(project.videoUrl),
+                      videoUrl: project.videoUrl,
                     })
                   }
                   onMouseEnter={() => {
@@ -278,8 +278,8 @@ export function VideoSection() {
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
           videoSrc={
-            typeof selectedVideo.videoSrc === "string"
-              ? selectedVideo.videoSrc
+            typeof selectedVideo.videoUrl === "string"
+              ? selectedVideo.videoUrl
               : ""
           }
           videoTitle={selectedVideo.title}
