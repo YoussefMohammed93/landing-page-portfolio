@@ -22,18 +22,28 @@ export function VideoModal({
   const [isMounted, setIsMounted] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
+  const [isMobileSafari, setIsMobileSafari] = useState(false);
   const [isSafariDesktop, setIsSafariDesktop] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const retryCount = useRef(0);
-  const maxRetries = 2;
+  const maxRetries = 3;
+  const preloadAttempted = useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
 
-    // Detect Safari browser on desktop specifically
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    // Detect Safari browser
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(
+      navigator.userAgent
+    );
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    setIsSafariDesktop(isSafari && !isMobile);
+    const isMobileSafariBrowser = isSafariBrowser && isMobile;
+    const isSafariDesktopBrowser = isSafariBrowser && !isMobile;
+
+    setIsSafari(isSafariBrowser);
+    setIsMobileSafari(isMobileSafariBrowser);
+    setIsSafariDesktop(isSafariDesktopBrowser);
 
     return () => {
       setIsMounted(false);
@@ -57,8 +67,23 @@ export function VideoModal({
       setIframeLoaded(false);
       setLoadError(false);
       retryCount.current = 0;
+      preloadAttempted.current = false;
     }
   }, [videoSrc]);
+
+  // Preload video when modal is opened
+  useEffect(() => {
+    if (isOpen && videoSrc && !preloadAttempted.current) {
+      preloadAttempted.current = true;
+
+      // For Safari, we need to ensure the iframe is loaded immediately
+      if (isSafari && iframeRef.current) {
+        const embedUrl = convertToEmbedUrl(videoSrc);
+        iframeRef.current.src = embedUrl;
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, videoSrc, isSafari]);
 
   // Convert any YouTube URL format to a direct embed URL
   const convertToEmbedUrl = (url: string): string => {
@@ -80,6 +105,11 @@ export function VideoModal({
     if (embedMatch) videoId = embedMatch[1];
 
     if (videoId) {
+      // For Safari mobile, use the most optimized URL
+      if (isMobileSafari) {
+        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
+      }
+
       // For Safari on desktop, use the most basic embed URL possible
       if (isSafariDesktop) {
         return `https://www.youtube.com/embed/${videoId}`;
@@ -127,13 +157,13 @@ export function VideoModal({
           }
 
           if (videoId) {
-            // Use the most basic embed URL possible
+            // Use the most basic embed URL possible for retries
             iframeRef.current.src = `https://www.youtube.com/embed/${videoId}`;
           } else {
             iframeRef.current.src = url;
           }
         }
-      }, 300); // Even faster retry
+      }, 200); // Faster retry
     }
   };
 

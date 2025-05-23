@@ -53,14 +53,20 @@ const getYouTubeEmbedUrl = (url: string) => {
   }
 
   if (videoId) {
-    // Check for Safari on desktop
+    // Check for Safari browser
     const isSafari =
       typeof navigator !== "undefined" &&
       /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const isMobile =
       typeof navigator !== "undefined" &&
       /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isMobileSafari = isSafari && isMobile;
     const isSafariDesktop = isSafari && !isMobile;
+
+    // For Safari mobile, use the most optimized URL with playsinline parameter
+    if (isMobileSafari) {
+      return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
+    }
 
     // Use absolute minimal URL for Safari Desktop
     if (isSafariDesktop) {
@@ -144,6 +150,9 @@ export default function ProjectsPage() {
     title: string;
     videoSrc: string;
   } | null>(null);
+
+  // State to track which video is being preloaded
+  const [preloadedVideoId, setPreloadedVideoId] = useState<string | null>(null);
 
   const [selectedAudio, setSelectedAudio] = useState<{
     id: Id<"musicTracks">;
@@ -271,6 +280,53 @@ export default function ProjectsPage() {
                             videoSrc: getYouTubeEmbedUrl(project.videoUrl),
                           })
                         }
+                        onMouseEnter={() => {
+                          // Preload this video when user hovers over the thumbnail
+                          setPreloadedVideoId(String(project._id));
+
+                          // Create a hidden iframe to preload the video
+                          const videoId = String(project._id);
+                          if (videoId !== preloadedVideoId) {
+                            const preloadIframe =
+                              document.createElement("iframe");
+                            preloadIframe.style.display = "none";
+                            preloadIframe.src = getYouTubeEmbedUrl(
+                              project.videoUrl
+                            );
+                            preloadIframe.setAttribute(
+                              "data-preload-id",
+                              videoId
+                            );
+
+                            // Remove the iframe after it has loaded or after 2 seconds
+                            const removeIframe = () => {
+                              const existingIframe = document.querySelector(
+                                `iframe[data-preload-id="${videoId}"]`
+                              );
+                              if (existingIframe && existingIframe.parentNode) {
+                                existingIframe.parentNode.removeChild(
+                                  existingIframe
+                                );
+                              }
+                            };
+
+                            preloadIframe.onload = removeIframe;
+                            setTimeout(removeIframe, 2000);
+
+                            // Remove any existing preload iframes for this video
+                            const existingIframe = document.querySelector(
+                              `iframe[data-preload-id="${videoId}"]`
+                            );
+                            if (existingIframe && existingIframe.parentNode) {
+                              existingIframe.parentNode.removeChild(
+                                existingIframe
+                              );
+                            }
+
+                            // Add the preload iframe to the DOM
+                            document.body.appendChild(preloadIframe);
+                          }
+                        }}
                       >
                         <Image
                           src={project.thumbnailUrl || "/placeholder.svg"}

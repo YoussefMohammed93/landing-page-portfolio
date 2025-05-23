@@ -15,27 +15,63 @@ export function YouTubePreconnect() {
       "https://i.ytimg.com",
       "https://s.ytimg.com",
       "https://yt3.ggpht.com",
+      "https://www.google.com", // For authentication
+      "https://accounts.google.com", // For authentication
+      "https://static.doubleclick.net", // For tracking
+      "https://googleads.g.doubleclick.net", // For ads
     ];
 
-    domains.forEach(domain => {
+    // Check if Safari browser
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isMobileSafari = isSafari && isMobile;
+
+    domains.forEach((domain) => {
+      // Add preconnect
       const link = document.createElement("link");
       link.rel = "preconnect";
       link.href = domain;
       link.crossOrigin = "anonymous";
       document.head.appendChild(link);
 
-      // Also add DNS prefetch as fallback
+      // Add DNS prefetch as fallback
       const dnsLink = document.createElement("link");
       dnsLink.rel = "dns-prefetch";
       dnsLink.href = domain;
       document.head.appendChild(dnsLink);
+
+      // For Safari, add preload for critical resources
+      if (isSafari && domain === "https://www.youtube.com") {
+        // Preload the YouTube player API
+        const preloadScript = document.createElement("link");
+        preloadScript.rel = "preload";
+        preloadScript.href = "https://www.youtube.com/iframe_api";
+        preloadScript.as = "script";
+        document.head.appendChild(preloadScript);
+
+        // For mobile Safari, preload the embed page
+        if (isMobileSafari) {
+          const preloadEmbed = document.createElement("link");
+          preloadEmbed.rel = "preload";
+          preloadEmbed.href = "https://www.youtube.com/embed";
+          preloadEmbed.as = "document";
+          document.head.appendChild(preloadEmbed);
+        }
+      }
     });
 
     return () => {
       // Clean up when component unmounts
-      const links = document.querySelectorAll('link[rel="preconnect"], link[rel="dns-prefetch"]');
-      links.forEach(link => {
-        if (domains.includes(link.getAttribute("href") || "")) {
+      const links = document.querySelectorAll(
+        'link[rel="preconnect"], link[rel="dns-prefetch"], link[rel="preload"]'
+      );
+      links.forEach((link) => {
+        const href = link.getAttribute("href") || "";
+        if (
+          domains.some((domain) => href.startsWith(domain)) ||
+          href === "https://www.youtube.com/iframe_api" ||
+          href === "https://www.youtube.com/embed"
+        ) {
           document.head.removeChild(link);
         }
       });
