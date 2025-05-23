@@ -22,10 +22,20 @@ export function VideoModal({
   const [isMounted, setIsMounted] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Detect Safari browser
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(
+      navigator.userAgent
+    );
+    setIsSafari(isSafariBrowser);
+
     return () => setIsMounted(false);
   }, []);
 
@@ -40,24 +50,50 @@ export function VideoModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Reset loading state when video source changes
+  useEffect(() => {
+    if (videoSrc) {
+      setIframeLoaded(false);
+      setLoadError(false);
+      retryCount.current = 0;
+    }
+  }, [videoSrc]);
+
   const origin = typeof window !== "undefined" ? window.location.origin : "";
+
+  // Enhanced URL with Safari-specific parameters
   const enhancedVideoSrc = videoSrc.includes("youtube.com/embed")
-    ? `${videoSrc}${videoSrc.includes("?") ? "&" : "?"}playsinline=1&rel=0&modestbranding=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}`
+    ? `${videoSrc}${videoSrc.includes("?") ? "&" : "?"}playsinline=1&rel=0&modestbranding=1&autoplay=0&enablejsapi=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}`
     : videoSrc;
 
   const handleIframeLoad = () => {
     setIframeLoaded(true);
     setLoadError(false);
+    retryCount.current = 0;
   };
 
   const handleIframeError = () => {
     setLoadError(true);
 
-    setTimeout(() => {
-      if (iframeRef.current) {
-        iframeRef.current.src = enhancedVideoSrc;
-      }
-    }, 1000);
+    if (retryCount.current < maxRetries) {
+      retryCount.current += 1;
+
+      setTimeout(() => {
+        if (iframeRef.current) {
+          // For Safari, try with a clean URL first
+          if (isSafari && videoSrc.includes("youtube.com/embed")) {
+            const videoId = videoSrc.match(/embed\/([^?&]+)/)?.[1];
+            if (videoId) {
+              iframeRef.current.src = `https://www.youtube.com/embed/${videoId}?playsinline=1&autoplay=0`;
+            } else {
+              iframeRef.current.src = enhancedVideoSrc;
+            }
+          } else {
+            iframeRef.current.src = enhancedVideoSrc;
+          }
+        }
+      }, 1000);
+    }
   };
 
   if (!isMounted) return null;
@@ -81,7 +117,7 @@ export function VideoModal({
               <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                 <div className="animate-pulse text-primary">
                   {loadError
-                    ? "Error loading video. Retrying..."
+                    ? `Error loading video. ${retryCount.current < maxRetries ? "Retrying..." : "Please try again later."}`
                     : "Loading video..."}
                 </div>
               </div>
@@ -96,6 +132,11 @@ export function VideoModal({
               onLoad={handleIframeLoad}
               onError={handleIframeError}
               loading="eager"
+              sandbox={
+                isSafari
+                  ? "allow-scripts allow-same-origin allow-presentation"
+                  : undefined
+              }
             ></iframe>
           </div>
         </div>
