@@ -37,8 +37,19 @@ export function TwoDAnimationsSection() {
     const match = url.match(regExp);
 
     if (match && match[2].length === 11) {
-      // Enhanced parameters for better Safari compatibility
-      return `https://www.youtube.com/embed/${match[2]}?playsinline=1&rel=0&modestbranding=1&autoplay=0&enablejsapi=1`;
+      // Use minimal parameters for better Safari compatibility
+      const videoId = match[2];
+      const isSafari =
+        typeof navigator !== "undefined" &&
+        /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      // Use minimal parameters for Safari
+      if (isSafari) {
+        return `https://www.youtube.com/embed/${videoId}?playsinline=1`;
+      }
+
+      // Use more parameters for other browsers
+      return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1`;
     }
 
     return url;

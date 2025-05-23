@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
@@ -23,9 +23,11 @@ export function VideoModal({
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
+  const [showDirectLink, setShowDirectLink] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCount = useRef(0);
-  const maxRetries = 3;
+  const maxRetries = 2;
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,7 +38,12 @@ export function VideoModal({
     );
     setIsSafari(isSafariBrowser);
 
-    return () => setIsMounted(false);
+    return () => {
+      setIsMounted(false);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -55,21 +62,53 @@ export function VideoModal({
     if (videoSrc) {
       setIframeLoaded(false);
       setLoadError(false);
+      setShowDirectLink(false);
       retryCount.current = 0;
+
+      // Set a timeout to show direct link option if loading takes too long
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (!iframeLoaded && isSafari) {
+          setShowDirectLink(true);
+        }
+      }, 3000); // Show direct link after 3 seconds if still loading in Safari
     }
-  }, [videoSrc]);
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, [videoSrc, iframeLoaded, isSafari]);
 
-  // Enhanced URL with Safari-specific parameters
-  const enhancedVideoSrc = videoSrc.includes("youtube.com/embed")
-    ? `${videoSrc}${videoSrc.includes("?") ? "&" : "?"}playsinline=1&rel=0&modestbranding=1&autoplay=0&enablejsapi=1${origin ? `&origin=${encodeURIComponent(origin)}` : ""}`
-    : videoSrc;
+  // Get original YouTube URL from embed URL
+  const getOriginalYouTubeUrl = (embedUrl: string): string => {
+    const videoId = embedUrl.match(/embed\/([^?&]+)/)?.[1];
+    return videoId ? `https://www.youtube.com/watch?v=${videoId}` : embedUrl;
+  };
+
+  // Simplified URL for Safari with minimal parameters
+  const getSafariVideoSrc = (url: string): string => {
+    if (url.includes("youtube.com/embed")) {
+      const videoId = url.match(/embed\/([^?&]+)/)?.[1];
+      return videoId
+        ? `https://www.youtube.com/embed/${videoId}?playsinline=1`
+        : url;
+    }
+    return url;
+  };
 
   const handleIframeLoad = () => {
     setIframeLoaded(true);
     setLoadError(false);
     retryCount.current = 0;
+
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
   };
 
   const handleIframeError = () => {
@@ -80,19 +119,18 @@ export function VideoModal({
 
       setTimeout(() => {
         if (iframeRef.current) {
-          // For Safari, try with a clean URL first
-          if (isSafari && videoSrc.includes("youtube.com/embed")) {
-            const videoId = videoSrc.match(/embed\/([^?&]+)/)?.[1];
-            if (videoId) {
-              iframeRef.current.src = `https://www.youtube.com/embed/${videoId}?playsinline=1&autoplay=0`;
-            } else {
-              iframeRef.current.src = enhancedVideoSrc;
-            }
+          // For Safari, use a simplified URL
+          if (isSafari) {
+            iframeRef.current.src = getSafariVideoSrc(videoSrc);
           } else {
-            iframeRef.current.src = enhancedVideoSrc;
+            // For other browsers, just retry with the original URL
+            iframeRef.current.src = videoSrc;
           }
         }
-      }, 1000);
+      }, 800); // Reduced timeout for faster retry
+    } else {
+      // After max retries, show direct link option
+      setShowDirectLink(true);
     }
   };
 
@@ -113,18 +151,32 @@ export function VideoModal({
               <X className="size-5" />
               <span className="sr-only">Close</span>
             </Button>
+
             {(!iframeLoaded || loadError) && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                <div className="animate-pulse text-primary">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
+                <div className="animate-pulse text-primary mb-4">
                   {loadError
                     ? `Error loading video. ${retryCount.current < maxRetries ? "Retrying..." : "Please try again later."}`
                     : "Loading video..."}
                 </div>
+
+                {showDirectLink && videoSrc.includes("youtube.com") && (
+                  <a
+                    href={getOriginalYouTubeUrl(videoSrc)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline mt-2 px-4 py-2 border border-primary rounded-md"
+                  >
+                    <ExternalLink className="size-4" />
+                    Open video directly on YouTube
+                  </a>
+                )}
               </div>
             )}
+
             <iframe
               ref={iframeRef}
-              src={enhancedVideoSrc}
+              src={isSafari ? getSafariVideoSrc(videoSrc) : videoSrc}
               title={videoTitle}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -132,11 +184,6 @@ export function VideoModal({
               onLoad={handleIframeLoad}
               onError={handleIframeError}
               loading="eager"
-              sandbox={
-                isSafari
-                  ? "allow-scripts allow-same-origin allow-presentation"
-                  : undefined
-              }
             ></iframe>
           </div>
         </div>

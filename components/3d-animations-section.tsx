@@ -35,8 +35,19 @@ export function ThreeDAnimationsSection() {
   const getYouTubeEmbedUrl = (url: string) => {
     const videoId = getYouTubeVideoId(url);
     if (!videoId) return "";
-    // Enhanced parameters for better Safari compatibility
-    return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1&autoplay=0&enablejsapi=1`;
+
+    // Use minimal parameters for better Safari compatibility
+    const isSafari =
+      typeof navigator !== "undefined" &&
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    // Use minimal parameters for Safari
+    if (isSafari) {
+      return `https://www.youtube.com/embed/${videoId}?playsinline=1`;
+    }
+
+    // Use more parameters for other browsers
+    return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1`;
   };
 
   const getYouTubeVideoId = (url: string) => {
