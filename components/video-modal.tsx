@@ -1,6 +1,6 @@
 "use client";
 
-import { X, ExternalLink } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
@@ -23,9 +23,7 @@ export function VideoModal({
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
-  const [showDirectLink, setShowDirectLink] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCount = useRef(0);
   const maxRetries = 2;
 
@@ -40,9 +38,6 @@ export function VideoModal({
 
     return () => {
       setIsMounted(false);
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -62,42 +57,35 @@ export function VideoModal({
     if (videoSrc) {
       setIframeLoaded(false);
       setLoadError(false);
-      setShowDirectLink(false);
       retryCount.current = 0;
-
-      // Set a timeout to show direct link option if loading takes too long
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-
-      loadingTimeoutRef.current = setTimeout(() => {
-        if (!iframeLoaded && isSafari) {
-          setShowDirectLink(true);
-        }
-      }, 3000); // Show direct link after 3 seconds if still loading in Safari
     }
+  }, [videoSrc]);
 
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-    };
-  }, [videoSrc, iframeLoaded, isSafari]);
-
-  // Get original YouTube URL from embed URL
-  const getOriginalYouTubeUrl = (embedUrl: string): string => {
-    const videoId = embedUrl.match(/embed\/([^?&]+)/)?.[1];
-    return videoId ? `https://www.youtube.com/watch?v=${videoId}` : embedUrl;
+  // Get clean YouTube video ID
+  const getYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    const match = url.match(/(?:embed\/|v=|v\/|youtu\.be\/)([^?&/]+)/);
+    return match && match[1] ? match[1] : null;
   };
 
-  // Simplified URL for Safari with minimal parameters
-  const getSafariVideoSrc = (url: string): string => {
-    if (url.includes("youtube.com/embed")) {
-      const videoId = url.match(/embed\/([^?&]+)/)?.[1];
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}?playsinline=1`
-        : url;
+  // Get the most basic URL for Safari
+  const getOptimizedVideoSrc = (url: string): string => {
+    if (!url) return "";
+
+    // Handle YouTube videos
+    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      const videoId = getYouTubeVideoId(url);
+      if (!videoId) return url;
+
+      // Super minimal URL for Safari
+      if (isSafari) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+
+      // Standard URL for other browsers
+      return `https://www.youtube.com/embed/${videoId}?rel=0`;
     }
+
     return url;
   };
 
@@ -105,10 +93,6 @@ export function VideoModal({
     setIframeLoaded(true);
     setLoadError(false);
     retryCount.current = 0;
-
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-    }
   };
 
   const handleIframeError = () => {
@@ -119,22 +103,22 @@ export function VideoModal({
 
       setTimeout(() => {
         if (iframeRef.current) {
-          // For Safari, use a simplified URL
-          if (isSafari) {
-            iframeRef.current.src = getSafariVideoSrc(videoSrc);
+          // Try with absolute minimal URL
+          const videoId = getYouTubeVideoId(videoSrc);
+          if (videoId) {
+            iframeRef.current.src = `https://www.youtube.com/embed/${videoId}`;
           } else {
-            // For other browsers, just retry with the original URL
             iframeRef.current.src = videoSrc;
           }
         }
-      }, 800); // Reduced timeout for faster retry
-    } else {
-      // After max retries, show direct link option
-      setShowDirectLink(true);
+      }, 500); // Faster retry
     }
   };
 
   if (!isMounted) return null;
+
+  // Prepare the video source
+  const optimizedVideoSrc = getOptimizedVideoSrc(videoSrc);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -154,29 +138,17 @@ export function VideoModal({
 
             {(!iframeLoaded || loadError) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80">
-                <div className="animate-pulse text-primary mb-4">
+                <div className="animate-pulse text-primary">
                   {loadError
-                    ? `Error loading video. ${retryCount.current < maxRetries ? "Retrying..." : "Please try again later."}`
+                    ? `Error loading video. ${retryCount.current < maxRetries ? "Retrying..." : "Please try again."}`
                     : "Loading video..."}
                 </div>
-
-                {showDirectLink && videoSrc.includes("youtube.com") && (
-                  <a
-                    href={getOriginalYouTubeUrl(videoSrc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline mt-2 px-4 py-2 border border-primary rounded-md"
-                  >
-                    <ExternalLink className="size-4" />
-                    Open video directly on YouTube
-                  </a>
-                )}
               </div>
             )}
 
             <iframe
               ref={iframeRef}
-              src={isSafari ? getSafariVideoSrc(videoSrc) : videoSrc}
+              src={optimizedVideoSrc}
               title={videoTitle}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

@@ -32,19 +32,18 @@ export function VideoSection() {
     const match = url.match(regExp);
 
     if (match && match[2].length === 11) {
-      // Use minimal parameters for better Safari compatibility
       const videoId = match[2];
       const isSafari =
         typeof navigator !== "undefined" &&
         /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-      // Use minimal parameters for Safari
+      // Use absolute minimal URL for Safari (no parameters)
       if (isSafari) {
-        return `https://www.youtube.com/embed/${videoId}?playsinline=1`;
+        return `https://www.youtube.com/embed/${videoId}`;
       }
 
-      // Use more parameters for other browsers
-      return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1`;
+      // Use minimal parameters for other browsers
+      return `https://www.youtube.com/embed/${videoId}?rel=0`;
     }
 
     return url;
