@@ -26,17 +26,44 @@ import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
 
 const getYouTubeEmbedUrl = (url: string) => {
-  const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
-  const match = url.match(regExp);
+  if (!url) return "";
 
-  if (match && match[2].length === 11) {
-    const videoId = match[2];
+  // Handle various YouTube URL formats
+  let videoId = null;
+
+  // Format: youtube.com/watch?v=VIDEO_ID
+  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=)([^&]+)/i);
+  if (watchMatch) videoId = watchMatch[1];
+
+  // Format: youtu.be/VIDEO_ID
+  const shortMatch = url.match(/(?:youtu\.be\/)([^?&/]+)/i);
+  if (shortMatch) videoId = shortMatch[1];
+
+  // Format: youtube.com/embed/VIDEO_ID
+  const embedMatch = url.match(/(?:youtube\.com\/embed\/)([^?&/]+)/i);
+  if (embedMatch) videoId = embedMatch[1];
+
+  // Standard format using the old regex as fallback
+  if (!videoId) {
+    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    }
+  }
+
+  if (videoId) {
+    // Check for Safari on desktop
     const isSafari =
       typeof navigator !== "undefined" &&
       /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isSafariDesktop = isSafari && !isMobile;
 
-    // Use absolute minimal URL for Safari (no parameters)
-    if (isSafari) {
+    // Use absolute minimal URL for Safari Desktop
+    if (isSafariDesktop) {
       return `https://www.youtube.com/embed/${videoId}`;
     }
 

@@ -22,7 +22,7 @@ export function VideoModal({
   const [isMounted, setIsMounted] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [isSafari, setIsSafari] = useState(false);
+  const [isSafariDesktop, setIsSafariDesktop] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const retryCount = useRef(0);
   const maxRetries = 2;
@@ -30,11 +30,10 @@ export function VideoModal({
   useEffect(() => {
     setIsMounted(true);
 
-    // Detect Safari browser
-    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(
-      navigator.userAgent
-    );
-    setIsSafari(isSafariBrowser);
+    // Detect Safari browser on desktop specifically
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsSafariDesktop(isSafari && !isMobile);
 
     return () => {
       setIsMounted(false);
@@ -61,31 +60,36 @@ export function VideoModal({
     }
   }, [videoSrc]);
 
-  // Get clean YouTube video ID
-  const getYouTubeVideoId = (url: string): string | null => {
-    if (!url) return null;
-    const match = url.match(/(?:embed\/|v=|v\/|youtu\.be\/)([^?&/]+)/);
-    return match && match[1] ? match[1] : null;
-  };
-
-  // Get the most basic URL for Safari
-  const getOptimizedVideoSrc = (url: string): string => {
+  // Convert any YouTube URL format to a direct embed URL
+  const convertToEmbedUrl = (url: string): string => {
     if (!url) return "";
 
-    // Handle YouTube videos
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-      const videoId = getYouTubeVideoId(url);
-      if (!videoId) return url;
+    // Handle various YouTube URL formats
+    let videoId = null;
 
-      // Super minimal URL for Safari
-      if (isSafari) {
+    // Format: youtube.com/watch?v=VIDEO_ID
+    const watchMatch = url.match(/(?:youtube\.com\/watch\?v=)([^&]+)/i);
+    if (watchMatch) videoId = watchMatch[1];
+
+    // Format: youtu.be/VIDEO_ID
+    const shortMatch = url.match(/(?:youtu\.be\/)([^?&/]+)/i);
+    if (shortMatch) videoId = shortMatch[1];
+
+    // Format: youtube.com/embed/VIDEO_ID
+    const embedMatch = url.match(/(?:youtube\.com\/embed\/)([^?&/]+)/i);
+    if (embedMatch) videoId = embedMatch[1];
+
+    if (videoId) {
+      // For Safari on desktop, use the most basic embed URL possible
+      if (isSafariDesktop) {
         return `https://www.youtube.com/embed/${videoId}`;
       }
 
-      // Standard URL for other browsers
+      // For other browsers, use a standard embed URL
       return `https://www.youtube.com/embed/${videoId}?rel=0`;
     }
 
+    // If no YouTube URL pattern is matched, return the original URL
     return url;
   };
 
@@ -103,22 +107,40 @@ export function VideoModal({
 
       setTimeout(() => {
         if (iframeRef.current) {
-          // Try with absolute minimal URL
-          const videoId = getYouTubeVideoId(videoSrc);
+          // Extract video ID and try with absolute minimal URL
+          const url = videoSrc;
+          let videoId = null;
+
+          // Try to extract video ID from various formats
+          const patterns = [
+            /(?:youtube\.com\/watch\?v=)([^&]+)/i, // youtube.com/watch?v=ID
+            /(?:youtu\.be\/)([^?&/]+)/i, // youtu.be/ID
+            /(?:youtube\.com\/embed\/)([^?&/]+)/i, // youtube.com/embed/ID
+          ];
+
+          for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) {
+              videoId = match[1];
+              break;
+            }
+          }
+
           if (videoId) {
+            // Use the most basic embed URL possible
             iframeRef.current.src = `https://www.youtube.com/embed/${videoId}`;
           } else {
-            iframeRef.current.src = videoSrc;
+            iframeRef.current.src = url;
           }
         }
-      }, 500); // Faster retry
+      }, 300); // Even faster retry
     }
   };
 
   if (!isMounted) return null;
 
-  // Prepare the video source
-  const optimizedVideoSrc = getOptimizedVideoSrc(videoSrc);
+  // Convert the video source to a proper embed URL
+  const embedUrl = convertToEmbedUrl(videoSrc);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -148,7 +170,7 @@ export function VideoModal({
 
             <iframe
               ref={iframeRef}
-              src={optimizedVideoSrc}
+              src={embedUrl}
               title={videoTitle}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

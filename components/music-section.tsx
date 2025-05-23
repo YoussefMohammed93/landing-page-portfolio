@@ -115,6 +115,7 @@ export function MusicSection() {
                           barWidth={2}
                           barGap={2}
                           barRadius={3}
+                          playerId={`music-section-${track._id}`}
                         />
                       </div>
                     </div>

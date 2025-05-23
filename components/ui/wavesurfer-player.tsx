@@ -7,6 +7,7 @@ import { Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useAudioPlayer } from "@/components/audio-player-context";
 
 interface WavesurferPlayerProps {
   audioSrc: string;
@@ -23,6 +24,7 @@ interface WavesurferPlayerProps {
   onPlay?: () => void;
   onPause?: () => void;
   onFinish?: () => void;
+  playerId?: string; // Unique ID for this player
 }
 
 export function WavesurferPlayer({
@@ -40,8 +42,15 @@ export function WavesurferPlayer({
   onPlay,
   onPause,
   onFinish,
+  playerId,
 }: WavesurferPlayerProps) {
   const primaryColor = useThemeColor("primary");
+  const { currentPlayingId, pauseAllExcept } = useAudioPlayer();
+
+  // Generate a unique ID if none is provided
+  const uniquePlayerId = useRef(
+    playerId || `player-${Math.random().toString(36).substring(2, 9)}`
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -58,6 +67,24 @@ export function WavesurferPlayer({
   useEffect(() => {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
+
+  // Listen for changes in the current playing ID and pause this player if needed
+  useEffect(() => {
+    if (
+      currentPlayingId &&
+      currentPlayingId !== uniquePlayerId.current &&
+      isPlayingRef.current &&
+      wavesurferRef.current
+    ) {
+      try {
+        wavesurferRef.current.pause();
+        setIsPlaying(false);
+        stopAudioProcessTracking();
+      } catch (error) {
+        console.warn("Error pausing audio:", error);
+      }
+    }
+  }, [currentPlayingId]);
 
   const startAudioProcessTracking = useCallback(() => {
     if (audioProcessIntervalRef.current) {
@@ -98,6 +125,9 @@ export function WavesurferPlayer({
       }
     } else {
       try {
+        // Notify the context that this player is starting playback
+        pauseAllExcept(uniquePlayerId.current);
+
         wavesurferRef.current.play();
         setIsPlaying(true);
         startAudioProcessTracking();
@@ -106,7 +136,12 @@ export function WavesurferPlayer({
         setIsPlaying(false);
       }
     }
-  }, [isReady, startAudioProcessTracking, stopAudioProcessTracking]);
+  }, [
+    isReady,
+    startAudioProcessTracking,
+    stopAudioProcessTracking,
+    pauseAllExcept,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -163,6 +198,8 @@ export function WavesurferPlayer({
 
           if (autoPlay) {
             try {
+              // Notify the context that this player is starting playback
+              pauseAllExcept(uniquePlayerId.current);
               wavesurfer.play();
               setIsPlaying(true);
               isPlayingRef.current = true;
@@ -177,6 +214,8 @@ export function WavesurferPlayer({
           if (!isMounted) return;
           setIsPlaying(true);
           isPlayingRef.current = true;
+          // Notify the context that this player is starting playback
+          pauseAllExcept(uniquePlayerId.current);
           startAudioProcessTracking();
           onPlay?.();
         });

@@ -107,6 +107,7 @@ export function AudioUpload({
               <div className="w-full mt-3 sm:mt-0">
                 <WavesurferPlayer
                   audioSrc={value}
+                  playerId="audio-upload-player"
                   waveColor="rgba(255, 255, 255, 0.3)"
                   progressColor="var(--primary)"
                   height={40}

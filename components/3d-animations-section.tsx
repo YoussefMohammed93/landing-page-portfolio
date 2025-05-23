@@ -33,27 +33,52 @@ export function ThreeDAnimationsSection() {
   );
 
   const getYouTubeEmbedUrl = (url: string) => {
-    const videoId = getYouTubeVideoId(url);
-    if (!videoId) return "";
+    if (!url) return "";
 
-    // Check for Safari browser
-    const isSafari =
-      typeof navigator !== "undefined" &&
-      /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    // Handle various YouTube URL formats
+    let videoId = null;
 
-    // Use absolute minimal URL for Safari (no parameters)
-    if (isSafari) {
-      return `https://www.youtube.com/embed/${videoId}`;
+    // Format: youtube.com/watch?v=VIDEO_ID
+    const watchMatch = url.match(/(?:youtube\.com\/watch\?v=)([^&]+)/i);
+    if (watchMatch) videoId = watchMatch[1];
+
+    // Format: youtu.be/VIDEO_ID
+    const shortMatch = url.match(/(?:youtu\.be\/)([^?&/]+)/i);
+    if (shortMatch) videoId = shortMatch[1];
+
+    // Format: youtube.com/embed/VIDEO_ID
+    const embedMatch = url.match(/(?:youtube\.com\/embed\/)([^?&/]+)/i);
+    if (embedMatch) videoId = embedMatch[1];
+
+    // Standard format using the old regex as fallback
+    if (!videoId) {
+      const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      if (match && match[2].length === 11) {
+        videoId = match[2];
+      }
     }
 
-    // Use minimal parameters for other browsers
-    return `https://www.youtube.com/embed/${videoId}?rel=0`;
-  };
+    if (videoId) {
+      // Check for Safari on desktop
+      const isSafari =
+        typeof navigator !== "undefined" &&
+        /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isMobile =
+        typeof navigator !== "undefined" &&
+        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isSafariDesktop = isSafari && !isMobile;
 
-  const getYouTubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
+      // Use absolute minimal URL for Safari Desktop
+      if (isSafariDesktop) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+
+      // Use minimal parameters for other browsers
+      return `https://www.youtube.com/embed/${videoId}?rel=0`;
+    }
+
+    return url;
   };
 
   return (

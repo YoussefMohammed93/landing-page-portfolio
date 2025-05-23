@@ -115,6 +115,7 @@ export function AudioModal({
               barRadius={3}
               autoPlay={true}
               initialTime={currentPosition}
+              playerId={`audio-modal-${audioTitle}`}
               onReady={(instance) => {
                 if (instance) {
                   wavesurferRef.current = instance;
