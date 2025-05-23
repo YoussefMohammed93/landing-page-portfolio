@@ -19,6 +19,9 @@ export function YouTubePreconnect() {
       "https://accounts.google.com", // For authentication
       "https://static.doubleclick.net", // For tracking
       "https://googleads.g.doubleclick.net", // For ads
+      "https://www.gstatic.com", // For YouTube player assets
+      "https://fonts.gstatic.com", // For fonts
+      "https://fonts.googleapis.com", // For fonts
     ];
 
     // Check if Safari browser
@@ -49,13 +52,27 @@ export function YouTubePreconnect() {
         preloadScript.as = "script";
         document.head.appendChild(preloadScript);
 
-        // For mobile Safari, preload the embed page
+        // Preload the YouTube player assets
+        const preloadPlayer = document.createElement("link");
+        preloadPlayer.rel = "preload";
+        preloadPlayer.href = "https://www.youtube.com/s/player/";
+        preloadPlayer.as = "fetch";
+        preloadPlayer.crossOrigin = "anonymous";
+        document.head.appendChild(preloadPlayer);
+
+        // For mobile Safari, preload the embed page and additional resources
         if (isMobileSafari) {
           const preloadEmbed = document.createElement("link");
           preloadEmbed.rel = "preload";
           preloadEmbed.href = "https://www.youtube.com/embed";
           preloadEmbed.as = "document";
           document.head.appendChild(preloadEmbed);
+
+          // Add a script to load YouTube API early
+          const ytScript = document.createElement("script");
+          ytScript.src = "https://www.youtube.com/iframe_api";
+          ytScript.async = true;
+          document.head.appendChild(ytScript);
         }
       }
     });
@@ -70,9 +87,20 @@ export function YouTubePreconnect() {
         if (
           domains.some((domain) => href.startsWith(domain)) ||
           href === "https://www.youtube.com/iframe_api" ||
-          href === "https://www.youtube.com/embed"
+          href === "https://www.youtube.com/embed" ||
+          href === "https://www.youtube.com/s/player/"
         ) {
           document.head.removeChild(link);
+        }
+      });
+
+      // Remove any YouTube API scripts we added
+      const scripts = document.querySelectorAll(
+        'script[src="https://www.youtube.com/iframe_api"]'
+      );
+      scripts.forEach((script) => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
         }
       });
     };
