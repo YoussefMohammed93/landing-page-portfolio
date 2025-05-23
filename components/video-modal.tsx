@@ -21,7 +21,6 @@ export function VideoModal({
 }: VideoModalProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
   const [isMobileSafari, setIsMobileSafari] = useState(false);
@@ -30,7 +29,6 @@ export function VideoModal({
 
   // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const retryCount = useRef(0);
   const maxRetries = 3;
   const preloadAttempted = useRef(false);
@@ -101,7 +99,6 @@ export function VideoModal({
   useEffect(() => {
     if (videoSrc) {
       setIframeLoaded(false);
-      setVideoLoaded(false);
       setLoadError(false);
       retryCount.current = 0;
       preloadAttempted.current = false;
@@ -118,19 +115,18 @@ export function VideoModal({
       preloadAttempted.current = true;
 
       // For Safari, we need to ensure the content is loaded immediately
-      if (isSafari) {
-        if (isSafariDesktop && videoRef.current && videoId) {
-          // For Safari desktop, use native video player
-          videoRef.current.load();
-        } else if (iframeRef.current) {
-          // For other Safari versions, use iframe with optimized URL
-          const embedUrl = convertToEmbedUrl(videoSrc);
-          iframeRef.current.src = embedUrl;
-        }
+      if (isSafari && iframeRef.current) {
+        // Use iframe with optimized URL for Safari
+        const embedUrl = convertToEmbedUrl(videoSrc);
+        iframeRef.current.src = embedUrl;
+      } else if (iframeRef.current) {
+        // For other browsers, use iframe with standard URL
+        const embedUrl = convertToEmbedUrl(videoSrc);
+        iframeRef.current.src = embedUrl;
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, videoSrc, isSafari, isSafariDesktop, videoId]);
+  }, [isOpen, videoSrc, isSafari, videoId]);
 
   // Convert any YouTube URL format to a direct embed URL
   const convertToEmbedUrl = (url: string): string => {
@@ -152,14 +148,14 @@ export function VideoModal({
     if (embedMatch) videoId = embedMatch[1];
 
     if (videoId) {
-      // For Safari mobile, use the most optimized URL
+      // For Safari mobile, use the most optimized URL with playsinline and other optimizations
       if (isMobileSafari) {
-        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
+        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&autoplay=1&controls=1&showinfo=0&modestbranding=1&fs=1&color=white`;
       }
 
-      // For Safari on desktop, use the most basic embed URL possible
+      // For Safari on desktop, use optimized embed URL
       if (isSafariDesktop) {
-        return `https://www.youtube.com/embed/${videoId}`;
+        return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1&controls=1&showinfo=0&modestbranding=1&fs=1&color=white`;
       }
 
       // For other browsers, use a standard embed URL
@@ -214,25 +210,6 @@ export function VideoModal({
     }
   };
 
-  // Handle video load event
-  const handleVideoLoad = () => {
-    setVideoLoaded(true);
-    setLoadError(false);
-
-    // Auto-play the video when loaded
-    if (videoRef.current) {
-      videoRef.current.play().catch((err) => {
-        console.warn("Auto-play failed:", err);
-      });
-    }
-  };
-
-  // Handle video error
-  const handleVideoError = () => {
-    setLoadError(true);
-    setVideoLoaded(false);
-  };
-
   if (!isMounted) return null;
 
   // Convert the video source to a proper embed URL
@@ -255,9 +232,7 @@ export function VideoModal({
             </Button>
 
             {/* Loading indicator */}
-            {((!iframeLoaded && !isSafariDesktop) ||
-              (!videoLoaded && isSafariDesktop) ||
-              loadError) && (
+            {(!iframeLoaded || loadError) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-10">
                 <div className="animate-pulse text-primary">
                   {loadError
@@ -267,53 +242,20 @@ export function VideoModal({
               </div>
             )}
 
-            {/* Use native video player for Safari desktop */}
-            {isSafariDesktop && videoId ? (
-              <div className="w-full h-full relative">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full"
-                  controls
-                  playsInline
-                  autoPlay
-                  onLoadedData={handleVideoLoad}
-                  onError={handleVideoError}
-                  preload="auto"
-                  poster={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-                >
-                  {/* Using direct video URL for better Safari compatibility */}
-                  <source
-                    src={`https://www.youtube.com/embed/${videoId}`}
-                    type="video/mp4"
-                  />
-                  {/* Fallback source */}
-                  <source
-                    src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-                    type="image/jpeg"
-                  />
-                  Your browser does not support the video tag.
-                </video>
-
-                {/* Fallback for Safari if video fails to load */}
-                {loadError && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-20">
-                    <p className="text-primary mb-4">
-                      Video could not be loaded directly.
-                    </p>
-                    <Button
-                      onClick={() =>
-                        window.open(
-                          `https://www.youtube.com/watch?v=${videoId}`,
-                          "_blank"
-                        )
-                      }
-                      variant="outline"
-                    >
-                      Open in YouTube
-                    </Button>
-                  </div>
-                )}
-              </div>
+            {/* Use optimized iframe for Safari browsers */}
+            {isSafari && videoId ? (
+              <iframe
+                ref={iframeRef}
+                src={`https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&autoplay=1&controls=1&showinfo=0&modestbranding=1&fs=1&color=white`}
+                title={videoTitle}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                loading="eager"
+                style={{ border: "none" }}
+              ></iframe>
             ) : (
               /* Use iframe for all other browsers */
               <iframe
