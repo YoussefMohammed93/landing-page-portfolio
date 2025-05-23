@@ -138,11 +138,6 @@ export function VideoModal({
             <span className="sr-only">Close</span>
           </Button>
         </div>
-        
-        {/* Video title */}
-        <div className="p-4">
-          <h3 className="text-lg font-semibold">{videoTitle}</h3>
-        </div>
       </CustomDialogContent>
     </Dialog>
   );
