@@ -155,11 +155,11 @@ export function getYouTubeEmbedUrl(
     params.append("playsinline", "1");
   }
 
-  // For Safari, add minimal compatibility parameters to avoid loading delays
+  // For Safari, minimize parameters to absolute essentials
   if (isSafari) {
+    // Only add html5 for Safari, remove everything else that might slow it down
     params.append("html5", "1");
-    // Remove wmode for Safari as it can cause loading issues
-    // params.append("wmode", "transparent");
+    // Don't add any other parameters for Safari to ensure fastest loading
   }
 
   // For mobile devices, optimize for performance
@@ -197,6 +197,39 @@ export function getYouTubeThumbnailUrl(
 }
 
 /**
+ * Creates an ultra-fast Safari-optimized YouTube embed URL
+ * @param videoId YouTube video ID
+ * @param options Minimal options for Safari
+ * @returns Ultra-minimal Safari embed URL
+ */
+export function getSafariUltraFastUrl(
+  videoId: string,
+  options?: {
+    autoplay?: boolean;
+    playsinline?: boolean;
+  }
+): string {
+  if (!videoId) return "";
+
+  const { autoplay = true, playsinline = true } = options || {};
+
+  // Ultra-minimal URL for Safari - only essential parameters
+  let url = `https://www.youtube.com/embed/${videoId}`;
+  const params: string[] = [];
+
+  if (autoplay) params.push("autoplay=1");
+  if (playsinline) params.push("playsinline=1");
+  params.push("rel=0"); // Always disable related videos
+  params.push("controls=1"); // Always show controls
+
+  if (params.length > 0) {
+    url += "?" + params.join("&");
+  }
+
+  return url;
+}
+
+/**
  * Preloads a YouTube video for faster playback
  * @param url YouTube URL
  * @param options Preload options
@@ -210,6 +243,22 @@ export function preloadYouTubeVideo(
   }
 ): void {
   const { isSafari = false, isMobile = false, timeout = 2000 } = options || {};
+
+  // For Safari, don't preload iframe - it causes delays
+  if (isSafari) {
+    // Just prefetch DNS and thumbnail
+    const link = document.createElement("link");
+    link.rel = "dns-prefetch";
+    link.href = "https://www.youtube.com";
+    document.head.appendChild(link);
+
+    const videoId = getYouTubeVideoId(url);
+    if (videoId) {
+      const img = new Image();
+      img.src = getYouTubeThumbnailUrl(url, "maxresdefault");
+    }
+    return;
+  }
 
   const embedUrl = getYouTubeEmbedUrl(url, {
     isSafari,

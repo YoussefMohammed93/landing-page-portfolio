@@ -11,6 +11,7 @@ import {
   getYouTubeThumbnailUrl,
   detectBrowserAndDevice,
   preloadYouTubeVideo,
+  getSafariUltraFastUrl,
 } from "@/lib/youtube-utils";
 
 type VideoModalProps = {
@@ -68,8 +69,19 @@ export function VideoModal({
         }
       }, 8000);
 
-      // For Safari, don't preload - it causes delays. Let user interaction trigger loading
-      if (!isSafari && videoSrc) {
+      // For Safari, use lightweight DNS prefetch instead of full preload
+      if (isSafari) {
+        // Lightweight DNS prefetch for faster connection
+        const link = document.createElement("link");
+        link.rel = "dns-prefetch";
+        link.href = "https://www.youtube.com";
+        document.head.appendChild(link);
+
+        // Also prefetch the thumbnail for instant display
+        const img = new Image();
+        img.src = getYouTubeThumbnailUrl(videoSrc, "maxresdefault");
+      } else {
+        // Other browsers can handle full preload
         preloadYouTubeVideo(videoSrc, {
           isSafari,
           isMobile,
@@ -155,18 +167,21 @@ export function VideoModal({
   // Extract video ID for potential direct video URL
   const videoId = getYouTubeVideoId(videoSrc);
 
-  // Safari-optimized embed URL - minimal parameters for faster loading
+  // Ultra-fast Safari optimization - bypass YouTube embed entirely for Safari
   const getSafariOptimizedUrl = () => {
     if (!videoId) return "";
 
     if (isSafari) {
-      // For Safari, use absolute minimal URL to avoid loading delays
-      if (isMobile) {
-        // Mobile Safari needs playsinline to prevent fullscreen takeover
-        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&autoplay=0`;
+      // For Safari, use the fastest possible approach
+      if (userInteracted) {
+        // After user interaction, use ultra-fast Safari URL
+        return getSafariUltraFastUrl(videoId, {
+          autoplay: true,
+          playsinline: isMobile,
+        });
       } else {
-        // Desktop Safari - minimal URL, no autoplay to avoid policy conflicts
-        return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
+        // Before user interaction, don't load iframe at all - show thumbnail only
+        return "";
       }
     } else {
       // Other browsers can handle more parameters
@@ -185,6 +200,12 @@ export function VideoModal({
   };
 
   const embedUrl = getSafariOptimizedUrl();
+
+  // Safari-specific: Create direct YouTube link for instant opening
+  const getDirectYouTubeUrl = () => {
+    if (!videoId) return "";
+    return `https://www.youtube.com/watch?v=${videoId}`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -214,29 +235,71 @@ export function VideoModal({
               </div>
             )}
 
-            {/* Safari click-to-play overlay */}
+            {/* Safari ultra-fast loading overlay */}
             {isSafari && !userInteracted && !hasError && (
-              <div
-                className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer z-10"
-                onClick={() => {
-                  setUserInteracted(true);
-                  setIsLoading(true);
-                  // Force iframe reload with user interaction
-                  if (iframeRef.current) {
-                    const newUrl = embedUrl.replace("autoplay=0", "autoplay=1");
-                    iframeRef.current.src = newUrl;
-                  }
-                }}
-              >
-                <div className="flex flex-col items-center gap-3 text-center p-6">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
+                <div className="flex flex-col items-center gap-4 text-center p-6 max-w-sm">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Play className="size-8 text-white ml-1" fill="white" />
+                    <div className="w-24 h-24 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
+                      <Play className="size-10 text-white ml-1" fill="white" />
                     </div>
-                    <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-pulse" />
+                    <div className="absolute inset-0 rounded-full border-2 border-red-400 animate-pulse" />
                   </div>
-                  <p className="text-white text-sm font-medium">
-                    Click to play video
+
+                  <div className="space-y-2">
+                    <h3 className="text-white text-lg font-semibold">
+                      {videoTitle}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      Choose your preferred way to watch:
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2 w-full">
+                    {/* Embedded player option */}
+                    <Button
+                      onClick={() => {
+                        setUserInteracted(true);
+                        setIsLoading(true);
+                        // Clear timeout since user is interacting
+                        if (loadTimeoutRef.current) {
+                          clearTimeout(loadTimeoutRef.current);
+                          loadTimeoutRef.current = null;
+                        }
+                      }}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                      size="lg"
+                    >
+                      <Play className="size-4 mr-2" />
+                      Play Here (Embedded)
+                    </Button>
+
+                    {/* Direct YouTube link option */}
+                    <Button
+                      onClick={() => {
+                        window.open(
+                          getDirectYouTubeUrl(),
+                          "_blank",
+                          "noopener,noreferrer"
+                        );
+                      }}
+                      variant="outline"
+                      className="w-full border-white/30 text-white hover:bg-white/10"
+                      size="lg"
+                    >
+                      <svg
+                        className="size-4 mr-2"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                      </svg>
+                      Open in YouTube (Faster)
+                    </Button>
+                  </div>
+
+                  <p className="text-white/60 text-xs">
+                    Safari optimized • Instant loading
                   </p>
                 </div>
               </div>
