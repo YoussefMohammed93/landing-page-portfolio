@@ -1,13 +1,67 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
 import { getYouTubeVideoId } from "@/lib/youtube-utils";
 import { YouTubePreconnect } from "@/components/youtube-preconnect";
 import { Progress } from "@/components/ui/progress";
+
+// Global state for Safari optimization
+let isPoolInitialized = false;
+
+// Safari optimization: Initialize iframe pool
+const initializeIframePool = () => {
+  if (isPoolInitialized) return;
+
+  const isSafari =
+    typeof navigator !== "undefined" &&
+    /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isSafari) {
+    // Create a hidden iframe to warm up YouTube embed system
+    const warmupIframe = document.createElement("iframe");
+    warmupIframe.src =
+      "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&controls=0&modestbranding=1&rel=0&enablejsapi=1";
+    warmupIframe.style.position = "absolute";
+    warmupIframe.style.left = "-9999px";
+    warmupIframe.style.top = "-9999px";
+    warmupIframe.style.width = "1px";
+    warmupIframe.style.height = "1px";
+    warmupIframe.style.opacity = "0";
+    warmupIframe.style.pointerEvents = "none";
+    warmupIframe.setAttribute("aria-hidden", "true");
+    warmupIframe.tabIndex = -1;
+
+    document.body.appendChild(warmupIframe);
+
+    // Remove after warming up
+    setTimeout(() => {
+      if (warmupIframe.parentNode) {
+        warmupIframe.parentNode.removeChild(warmupIframe);
+      }
+    }, 3000);
+  }
+
+  isPoolInitialized = true;
+};
+
+// Safari optimization: Preload YouTube API
+const preloadYouTubeAPI = () => {
+  const isSafari =
+    typeof navigator !== "undefined" &&
+    /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  if (isSafari && !(window as unknown as { YT?: unknown }).YT) {
+    // Load YouTube API script early
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    document.head.appendChild(script);
+  }
+};
 
 type VideoModalProps = {
   isOpen: boolean;
@@ -39,6 +93,15 @@ export function VideoModal({
     /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   const isMobileSafari = isSafari && isMobile;
+
+  // Initialize Safari optimizations on component mount
+  useEffect(() => {
+    if (isSafari) {
+      // Initialize iframe pool and preload API
+      initializeIframePool();
+      preloadYouTubeAPI();
+    }
+  }, [isSafari]);
 
   // Handle cleanup when modal closes
   const handleClose = () => {
@@ -101,7 +164,7 @@ export function VideoModal({
   }, [videoSrc, isOpen, isSafari, isMobileSafari]);
 
   // Build YouTube embed URL with appropriate parameters
-  const getYouTubeEmbedUrl = () => {
+  const getYouTubeEmbedUrl = useCallback(() => {
     if (!videoId) return "";
 
     const params = new URLSearchParams({
@@ -113,17 +176,26 @@ export function VideoModal({
       origin: typeof window !== "undefined" ? window.location.origin : "",
     });
 
-    // Add Safari-specific parameters
+    // Add Safari-specific parameters for better performance
     if (isSafari) {
       params.append("playsinline", "1");
+      params.append("html5", "1"); // Force HTML5 player
+      params.append("iv_load_policy", "3"); // Hide annotations
+      params.append("cc_load_policy", "0"); // Hide captions by default
+      params.append("disablekb", "1"); // Disable keyboard controls for faster loading
 
+      // For mobile Safari, add additional optimizations
       if (isMobile) {
         params.append("controls", "1");
+        params.append("showinfo", "0"); // Hide video info
+      } else {
+        // For desktop Safari, preload metadata
+        params.append("preload", "metadata");
       }
     }
 
     return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
-  };
+  }, [videoId, isSafari, isMobile]);
 
   return (
     <Dialog
@@ -158,21 +230,40 @@ export function VideoModal({
                 title={videoTitle}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                loading="eager" // Force eager loading for Safari
                 onLoad={() => {
-                  // Hide loading indicator after iframe loads
-                  setTimeout(
-                    () => {
-                      setIsLoading(false);
-                      setLoadingProgress(100);
+                  // Safari-specific optimization: Add extra delay for first load
+                  const delay = isSafari
+                    ? isPoolInitialized
+                      ? 500
+                      : 1500
+                    : 500;
 
-                      if (progressIntervalRef.current) {
-                        clearInterval(progressIntervalRef.current);
-                        progressIntervalRef.current = null;
-                      }
-                    },
-                    isSafari ? 1000 : 500
-                  ); // Longer delay for Safari
+                  setTimeout(() => {
+                    setIsLoading(false);
+                    setLoadingProgress(100);
+
+                    if (progressIntervalRef.current) {
+                      clearInterval(progressIntervalRef.current);
+                      progressIntervalRef.current = null;
+                    }
+                  }, delay);
                 }}
+                onError={() => {
+                  // Handle iframe loading errors
+                  console.warn("YouTube iframe failed to load");
+                  setIsLoading(false);
+                  if (progressIntervalRef.current) {
+                    clearInterval(progressIntervalRef.current);
+                    progressIntervalRef.current = null;
+                  }
+                }}
+                // Safari-specific attributes
+                {...(isSafari && {
+                  sandbox:
+                    "allow-scripts allow-same-origin allow-presentation allow-forms",
+                  referrerPolicy: "strict-origin-when-cross-origin",
+                })}
               />
             ) : (
               <div className="w-full h-full bg-muted flex items-center justify-center">

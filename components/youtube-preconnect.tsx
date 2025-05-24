@@ -43,13 +43,14 @@ export function YouTubePreconnect() {
       dnsLink.href = domain;
       document.head.appendChild(dnsLink);
 
-      // For Safari, add preload for critical resources
+      // For Safari, add aggressive preload for critical resources
       if (isSafari && domain === "https://www.youtube.com") {
         // Preload the YouTube player API
         const preloadScript = document.createElement("link");
         preloadScript.rel = "preload";
         preloadScript.href = "https://www.youtube.com/iframe_api";
         preloadScript.as = "script";
+        preloadScript.crossOrigin = "anonymous";
         document.head.appendChild(preloadScript);
 
         // Preload the YouTube player assets
@@ -60,19 +61,36 @@ export function YouTubePreconnect() {
         preloadPlayer.crossOrigin = "anonymous";
         document.head.appendChild(preloadPlayer);
 
-        // For mobile Safari, preload the embed page and additional resources
-        if (isMobileSafari) {
-          const preloadEmbed = document.createElement("link");
-          preloadEmbed.rel = "preload";
-          preloadEmbed.href = "https://www.youtube.com/embed";
-          preloadEmbed.as = "document";
-          document.head.appendChild(preloadEmbed);
+        // Preload YouTube CSS
+        const preloadCSS = document.createElement("link");
+        preloadCSS.rel = "preload";
+        preloadCSS.href = "https://www.youtube.com/s/desktop/";
+        preloadCSS.as = "style";
+        preloadCSS.crossOrigin = "anonymous";
+        document.head.appendChild(preloadCSS);
 
-          // Add a script to load YouTube API early
-          const ytScript = document.createElement("script");
-          ytScript.src = "https://www.youtube.com/iframe_api";
-          ytScript.async = true;
-          document.head.appendChild(ytScript);
+        // For Safari, always preload the embed page and additional resources
+        const preloadEmbed = document.createElement("link");
+        preloadEmbed.rel = "preload";
+        preloadEmbed.href = "https://www.youtube.com/embed";
+        preloadEmbed.as = "document";
+        document.head.appendChild(preloadEmbed);
+
+        // Add a script to load YouTube API early for Safari
+        const ytScript = document.createElement("script");
+        ytScript.src = "https://www.youtube.com/iframe_api";
+        ytScript.async = true;
+        ytScript.defer = true;
+        document.head.appendChild(ytScript);
+
+        // For mobile Safari, add additional optimizations
+        if (isMobileSafari) {
+          // Preload mobile-specific resources
+          const preloadMobile = document.createElement("link");
+          preloadMobile.rel = "preload";
+          preloadMobile.href = "https://m.youtube.com/";
+          preloadMobile.as = "document";
+          document.head.appendChild(preloadMobile);
         }
       }
     });
@@ -88,9 +106,13 @@ export function YouTubePreconnect() {
           domains.some((domain) => href.startsWith(domain)) ||
           href === "https://www.youtube.com/iframe_api" ||
           href === "https://www.youtube.com/embed" ||
-          href === "https://www.youtube.com/s/player/"
+          href === "https://www.youtube.com/s/player/" ||
+          href === "https://www.youtube.com/s/desktop/" ||
+          href === "https://m.youtube.com/"
         ) {
-          document.head.removeChild(link);
+          if (link.parentNode) {
+            document.head.removeChild(link);
+          }
         }
       });
 
