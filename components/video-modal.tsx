@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { CustomDialogContent } from "@/components/ui/custom-dialog";
+import { Loader2 } from "lucide-react";
 
 type VideoModalProps = {
   isOpen: boolean;
@@ -104,11 +105,10 @@ export function VideoModal({
       <DialogTitle className="sr-only">{videoTitle}</DialogTitle>
       <CustomDialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 bg-background/95 backdrop-blur-sm border-border">
         <div className="relative">
-
           <div className="relative aspect-video w-full bg-muted/30">
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <Loader2 className="animate-spin size-7"/>
               </div>
             )}
 

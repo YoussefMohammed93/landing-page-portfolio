@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
-import { VideoModal } from "./video-modal";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Play, Film, Video } from "lucide-react";
@@ -15,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedSection } from "./animated-section";
 import { StaggeredChildren } from "./staggered-children";
 import { Card, CardContent } from "@/components/ui/card";
+import { VideoModal } from "./video-modal";
 
 export function VideoSection() {
   const [selectedVideo, setSelectedVideo] = useState<{
@@ -31,8 +31,8 @@ export function VideoSection() {
 
   const videoProjects = useQuery(api.video.getVideoProjects, { limit: 3 });
 
-  const getYouTubeEmbedUrl = (url: string) => {
-    if (!url) return "";
+  const getYouTubeVideoId = (url: string) => {
+    if (!url) return null;
 
     // Handle various YouTube URL formats
     let videoId = null;
@@ -58,32 +58,47 @@ export function VideoSection() {
       }
     }
 
-    if (videoId) {
-      // Check for Safari browser
-      const isSafari =
-        typeof navigator !== "undefined" &&
-        /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isMobile =
-        typeof navigator !== "undefined" &&
-        /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const isMobileSafari = isSafari && isMobile;
-      const isSafariDesktop = isSafari && !isMobile;
+    return videoId;
+  };
 
-      // For Safari mobile, use the most optimized URL with playsinline parameter
-      if (isMobileSafari) {
-        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
-      }
+  const getYouTubeWatchUrl = (url: string) => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
+  };
 
-      // Use absolute minimal URL for Safari Desktop
-      if (isSafariDesktop) {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
+  const getYouTubeEmbedUrl = (url: string) => {
+    const videoId = getYouTubeVideoId(url);
+    if (!videoId) return url;
 
-      // Use minimal parameters for other browsers
-      return `https://www.youtube.com/embed/${videoId}?rel=0`;
+    // Check for Safari browser
+    const isSafari =
+      typeof navigator !== "undefined" &&
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isMobileSafari = isSafari && isMobile;
+    const isSafariDesktop = isSafari && !isMobile;
+
+    // For Safari mobile, use the most optimized URL with playsinline parameter
+    if (isMobileSafari) {
+      return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
     }
 
-    return url;
+    // Use absolute minimal URL for Safari Desktop
+    if (isSafariDesktop) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Use minimal parameters for other browsers
+    return `https://www.youtube.com/embed/${videoId}?rel=0`;
+  };
+
+  const isSafariBrowser = () => {
+    return (
+      typeof navigator !== "undefined" &&
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    );
   };
 
   return (
@@ -181,11 +196,20 @@ export function VideoSection() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedVideo({
-                      id: project._id,
-                      title: project.title,
-                      videoUrl: project.videoUrl,
-                    });
+
+                    // Check if Safari browser
+                    if (isSafariBrowser()) {
+                      // For Safari, navigate directly to YouTube
+                      const youtubeUrl = getYouTubeWatchUrl(project.videoUrl);
+                      window.open(youtubeUrl, "_blank");
+                    } else {
+                      // For other browsers, open modal
+                      setSelectedVideo({
+                        id: project._id,
+                        title: project.title,
+                        videoUrl: project.videoUrl,
+                      });
+                    }
                   }}
                   onMouseEnter={() => {
                     // Preload this video when user hovers over the thumbnail
