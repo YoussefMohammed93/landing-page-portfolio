@@ -183,13 +183,15 @@ export function ThreeDAnimationsSection() {
               >
                 <div
                   className="relative aspect-video cursor-pointer"
-                  onClick={() =>
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     setSelectedVideo({
                       id: project._id,
                       title: project.title,
                       videoUrl: project.videoUrl,
-                    })
-                  }
+                    });
+                  }}
                   onMouseEnter={() => {
                     // Preload this video when user hovers over the thumbnail
                     setPreloadedVideoId(project._id);

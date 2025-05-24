@@ -273,13 +273,15 @@ export default function ProjectsPage() {
                     {!isMusicTrack(project) && isVideoProject(project) ? (
                       <div
                         className="relative aspect-video cursor-pointer"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setSelectedVideo({
                             id: project._id,
                             title: project.title,
                             videoSrc: getYouTubeEmbedUrl(project.videoUrl),
-                          })
-                        }
+                          });
+                        }}
                         onMouseEnter={() => {
                           // Preload this video when user hovers over the thumbnail
                           setPreloadedVideoId(String(project._id));
@@ -351,7 +353,9 @@ export default function ProjectsPage() {
                     ) : isMusicTrack(project) ? (
                       <div
                         className="relative aspect-square bg-muted/30 cursor-pointer overflow-hidden"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setSelectedAudio({
                             id: project._id,
                             title: project.title,
@@ -359,8 +363,8 @@ export default function ProjectsPage() {
                             coverArt: project.coverArt,
                             category: project.category,
                             duration: project.duration,
-                          })
-                        }
+                          });
+                        }}
                       >
                         <Image
                           src={project.coverArt || "/placeholder.svg"}
