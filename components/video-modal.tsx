@@ -31,8 +31,10 @@ export function VideoModal({
   const [hasError, setHasError] = useState(false);
   const [isSafari, setIsSafari] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Browser detection
   useEffect(() => {
@@ -46,21 +48,43 @@ export function VideoModal({
     return () => setIsMounted(false);
   }, []);
 
-  // Reset states when modal opens/closes and preload video
+  // Reset states when modal opens/closes with Safari-optimized loading
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
       setHasError(false);
+      setUserInteracted(false);
 
-      // Preload video for faster playback
-      if (videoSrc) {
+      // Clear any existing timeout
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+
+      // Set a timeout for Safari - if video doesn't load in 8 seconds, show error
+      loadTimeoutRef.current = setTimeout(() => {
+        if (isSafari) {
+          setIsLoading(false);
+          setHasError(true);
+        }
+      }, 8000);
+
+      // For Safari, don't preload - it causes delays. Let user interaction trigger loading
+      if (!isSafari && videoSrc) {
         preloadYouTubeVideo(videoSrc, {
           isSafari,
           isMobile,
-          timeout: 3000,
+          timeout: 2000,
         });
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = null;
+      }
+    };
   }, [isOpen, videoSrc, isSafari, isMobile]);
 
   // Keyboard navigation
@@ -97,11 +121,21 @@ export function VideoModal({
   };
 
   const handleIframeLoad = () => {
+    // Clear the timeout since video loaded successfully
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
     setIsLoading(false);
     setHasError(false);
   };
 
   const handleIframeError = () => {
+    // Clear the timeout
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
     setIsLoading(false);
     setHasError(true);
   };
@@ -118,19 +152,39 @@ export function VideoModal({
 
   if (!isMounted) return null;
 
-  // Get optimized embed URL
-  const embedUrl = getYouTubeEmbedUrl(videoSrc, {
-    isSafari,
-    isMobile,
-    autoplay: true,
-    controls: true,
-    enableApi: true,
-    playsinline: true,
-    rel: false,
-  });
-
   // Extract video ID for potential direct video URL
   const videoId = getYouTubeVideoId(videoSrc);
+
+  // Safari-optimized embed URL - minimal parameters for faster loading
+  const getSafariOptimizedUrl = () => {
+    if (!videoId) return "";
+
+    if (isSafari) {
+      // For Safari, use absolute minimal URL to avoid loading delays
+      if (isMobile) {
+        // Mobile Safari needs playsinline to prevent fullscreen takeover
+        return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&autoplay=0`;
+      } else {
+        // Desktop Safari - minimal URL, no autoplay to avoid policy conflicts
+        return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
+      }
+    } else {
+      // Other browsers can handle more parameters
+      return getYouTubeEmbedUrl(videoSrc, {
+        isSafari,
+        isMobile,
+        autoplay: false, // Let user click to play for better UX
+        controls: true,
+        enableApi: false, // Disable API for faster loading
+        playsinline: true,
+        rel: false,
+        modestbranding: true,
+        showinfo: false,
+      });
+    }
+  };
+
+  const embedUrl = getSafariOptimizedUrl();
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -160,6 +214,35 @@ export function VideoModal({
               </div>
             )}
 
+            {/* Safari click-to-play overlay */}
+            {isSafari && !userInteracted && !hasError && (
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer z-10"
+                onClick={() => {
+                  setUserInteracted(true);
+                  setIsLoading(true);
+                  // Force iframe reload with user interaction
+                  if (iframeRef.current) {
+                    const newUrl = embedUrl.replace("autoplay=0", "autoplay=1");
+                    iframeRef.current.src = newUrl;
+                  }
+                }}
+              >
+                <div className="flex flex-col items-center gap-3 text-center p-6">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Play className="size-8 text-white ml-1" fill="white" />
+                    </div>
+                    <div className="absolute inset-0 rounded-full border-2 border-white/30 animate-pulse" />
+                  </div>
+                  <p className="text-white text-sm font-medium">
+                    Click to play video
+                  </p>
+                  <p className="text-white/70 text-xs">Optimized for Safari</p>
+                </div>
+              </div>
+            )}
+
             {hasError && (
               <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
                 <div className="flex flex-col items-center gap-2 text-center p-4">
@@ -173,6 +256,7 @@ export function VideoModal({
                     onClick={() => {
                       setIsLoading(true);
                       setHasError(false);
+                      setUserInteracted(false);
                       // Force reload
                       if (iframeRef.current) {
                         const src = iframeRef.current.src;
@@ -198,13 +282,15 @@ export function VideoModal({
                 src={embedUrl}
                 title={videoTitle}
                 className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allow={
+                  isSafari
+                    ? "autoplay; encrypted-media; picture-in-picture"
+                    : "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                }
                 allowFullScreen
-                loading="lazy"
+                loading={isSafari ? "eager" : "lazy"}
                 onLoad={handleIframeLoad}
                 onError={handleIframeError}
-                // Safari-specific optimizations
-                sandbox="allow-scripts allow-same-origin allow-presentation"
                 referrerPolicy="strict-origin-when-cross-origin"
                 style={{
                   border: "none",

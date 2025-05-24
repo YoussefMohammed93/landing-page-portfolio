@@ -155,10 +155,11 @@ export function getYouTubeEmbedUrl(
     params.append("playsinline", "1");
   }
 
-  // For Safari, add additional compatibility parameters
+  // For Safari, add minimal compatibility parameters to avoid loading delays
   if (isSafari) {
     params.append("html5", "1");
-    params.append("wmode", "transparent");
+    // Remove wmode for Safari as it can cause loading issues
+    // params.append("wmode", "transparent");
   }
 
   // For mobile devices, optimize for performance
