@@ -238,7 +238,6 @@ export function VideoModal({
                   <p className="text-white text-sm font-medium">
                     Click to play video
                   </p>
-                  <p className="text-white/70 text-xs">Optimized for Safari</p>
                 </div>
               </div>
             )}
