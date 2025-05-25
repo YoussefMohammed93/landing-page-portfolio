@@ -19,80 +19,22 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AudioModal } from "@/components/audio-modal";
 import { useParams, notFound } from "next/navigation";
+import { VideoModal } from "@/components/video-modal";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
-import { VideoModal } from "@/components/video-modal";
-
-const getYouTubeVideoId = (url: string) => {
-  if (!url) return null;
-
-  // Handle various YouTube URL formats
-  let videoId = null;
-
-  // Format: youtube.com/watch?v=VIDEO_ID
-  const watchMatch = url.match(/(?:youtube\.com\/watch\?v=)([^&]+)/i);
-  if (watchMatch) videoId = watchMatch[1];
-
-  // Format: youtu.be/VIDEO_ID
-  const shortMatch = url.match(/(?:youtu\.be\/)([^?&/]+)/i);
-  if (shortMatch) videoId = shortMatch[1];
-
-  // Format: youtube.com/embed/VIDEO_ID
-  const embedMatch = url.match(/(?:youtube\.com\/embed\/)([^?&/]+)/i);
-  if (embedMatch) videoId = embedMatch[1];
-
-  // Standard format using the old regex as fallback
-  if (!videoId) {
-    const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      videoId = match[2];
-    }
-  }
-
-  return videoId;
-};
-
-const getYouTubeWatchUrl = (url: string) => {
-  const videoId = getYouTubeVideoId(url);
-  return videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
-};
 
 const getYouTubeEmbedUrl = (url: string) => {
-  const videoId = getYouTubeVideoId(url);
-  if (!videoId) return url;
+  const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
+  const match = url.match(regExp);
 
-  // Check for Safari browser
-  const isSafari =
-    typeof navigator !== "undefined" &&
-    /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const isMobile =
-    typeof navigator !== "undefined" &&
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isMobileSafari = isSafari && isMobile;
-  const isSafariDesktop = isSafari && !isMobile;
-
-  // For Safari mobile, use the most optimized URL with playsinline parameter
-  if (isMobileSafari) {
-    return `https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0`;
+  if (match && match[2].length === 11) {
+    // Add parameters for better Safari compatibility
+    return `https://www.youtube.com/embed/${match[2]}?playsinline=1&rel=0&modestbranding=1`;
   }
 
-  // Use absolute minimal URL for Safari Desktop
-  if (isSafariDesktop) {
-    return `https://www.youtube.com/embed/${videoId}`;
-  }
-
-  // Use minimal parameters for other browsers
-  return `https://www.youtube.com/embed/${videoId}?rel=0`;
-};
-
-const isSafariBrowser = () => {
-  return (
-    typeof navigator !== "undefined" &&
-    /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-  );
+  return url;
 };
 
 type VideoProject = Doc<"videoProjects">;
@@ -165,9 +107,6 @@ export default function ProjectsPage() {
     title: string;
     videoSrc: string;
   } | null>(null);
-
-  // State to track which video is being preloaded
-  const [preloadedVideoId, setPreloadedVideoId] = useState<string | null>(null);
 
   const [selectedAudio, setSelectedAudio] = useState<{
     id: Id<"musicTracks">;
@@ -288,73 +227,13 @@ export default function ProjectsPage() {
                     {!isMusicTrack(project) && isVideoProject(project) ? (
                       <div
                         className="relative aspect-video cursor-pointer"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-
-                          // Check if Safari browser
-                          if (isSafariBrowser()) {
-                            // For Safari, navigate directly to YouTube
-                            const youtubeUrl = getYouTubeWatchUrl(
-                              project.videoUrl
-                            );
-                            window.open(youtubeUrl, "_blank");
-                          } else {
-                            // For other browsers, open modal
-                            setSelectedVideo({
-                              id: project._id,
-                              title: project.title,
-                              videoSrc: getYouTubeEmbedUrl(project.videoUrl),
-                            });
-                          }
-                        }}
-                        onMouseEnter={() => {
-                          // Preload this video when user hovers over the thumbnail
-                          setPreloadedVideoId(String(project._id));
-
-                          // Create a hidden iframe to preload the video
-                          const videoId = String(project._id);
-                          if (videoId !== preloadedVideoId) {
-                            const preloadIframe =
-                              document.createElement("iframe");
-                            preloadIframe.style.display = "none";
-                            preloadIframe.src = getYouTubeEmbedUrl(
-                              project.videoUrl
-                            );
-                            preloadIframe.setAttribute(
-                              "data-preload-id",
-                              videoId
-                            );
-
-                            // Remove the iframe after it has loaded or after 2 seconds
-                            const removeIframe = () => {
-                              const existingIframe = document.querySelector(
-                                `iframe[data-preload-id="${videoId}"]`
-                              );
-                              if (existingIframe && existingIframe.parentNode) {
-                                existingIframe.parentNode.removeChild(
-                                  existingIframe
-                                );
-                              }
-                            };
-
-                            preloadIframe.onload = removeIframe;
-                            setTimeout(removeIframe, 2000);
-
-                            // Remove any existing preload iframes for this video
-                            const existingIframe = document.querySelector(
-                              `iframe[data-preload-id="${videoId}"]`
-                            );
-                            if (existingIframe && existingIframe.parentNode) {
-                              existingIframe.parentNode.removeChild(
-                                existingIframe
-                              );
-                            }
-
-                            // Add the preload iframe to the DOM
-                            document.body.appendChild(preloadIframe);
-                          }
-                        }}
+                        onClick={() =>
+                          setSelectedVideo({
+                            id: project._id,
+                            title: project.title,
+                            videoSrc: getYouTubeEmbedUrl(project.videoUrl),
+                          })
+                        }
                       >
                         <Image
                           src={project.thumbnailUrl || "/placeholder.svg"}
@@ -379,9 +258,7 @@ export default function ProjectsPage() {
                     ) : isMusicTrack(project) ? (
                       <div
                         className="relative aspect-square bg-muted/30 cursor-pointer overflow-hidden"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                        onClick={() =>
                           setSelectedAudio({
                             id: project._id,
                             title: project.title,
@@ -389,8 +266,8 @@ export default function ProjectsPage() {
                             coverArt: project.coverArt,
                             category: project.category,
                             duration: project.duration,
-                          });
-                        }}
+                          })
+                        }
                       >
                         <Image
                           src={project.coverArt || "/placeholder.svg"}
