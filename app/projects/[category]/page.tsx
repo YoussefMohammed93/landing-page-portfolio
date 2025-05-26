@@ -3,14 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import {
-  Play,
-  Film,
-  Video,
-  Music,
-  ArrowLeft,
-  AudioLines as AudioLinesIcon,
-} from "lucide-react";
+import { Play, Film, Video, Music, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
@@ -24,6 +17,7 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatedSection } from "@/components/animated-section";
 import { StaggeredChildren } from "@/components/staggered-children";
+import { WavesurferPlayer } from "@/components/ui/wavesurfer-player";
 
 const getYouTubeEmbedUrl = (url: string) => {
   const regExp = /^.*(youtu.be\/|v\/|e\/|u\/\w+\/|embed\/|v=)([^#&?]*).*/;
@@ -175,25 +169,48 @@ export default function ProjectsPage() {
             </div>
           </div>
           {projects === undefined ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card
-                  key={i}
-                  className="overflow-hidden bg-card/50 border-border p-0"
-                >
-                  <CardContent className="p-0">
-                    <div className="relative aspect-video w-full">
-                      <Skeleton className="absolute inset-0 rounded-none" />
-                    </div>
-                    <div className="p-4">
-                      <Skeleton className="h-6 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-full mb-1" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            config.isMusic ? (
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Card key={i} className="bg-muted/30 border border-border">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="w-full md:w-3/8 flex items-center gap-5">
+                          <div className="h-12 w-12 rounded-full bg-muted/50 animate-pulse"></div>
+                          <div className="flex-1">
+                            <div className="h-5 w-32 bg-muted/50 animate-pulse rounded mb-2"></div>
+                            <div className="h-4 w-24 bg-muted/50 animate-pulse rounded"></div>
+                          </div>
+                        </div>
+                        <div className="w-full">
+                          <div className="h-[50px] bg-muted/50 animate-pulse rounded"></div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Card
+                    key={i}
+                    className="overflow-hidden bg-card/50 border-border p-0"
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative aspect-video w-full">
+                        <Skeleton className="absolute inset-0 rounded-none" />
+                      </div>
+                      <div className="p-4">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-full mb-1" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )
           ) : projects.length === 0 ? (
             <div className="flex items-center flex-col gap-5 py-20">
               {category === "music" ? (
@@ -210,7 +227,11 @@ export default function ProjectsPage() {
             </div>
           ) : (
             <StaggeredChildren
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+              className={cn(
+                config.isMusic
+                  ? "space-y-4 max-w-4xl mx-auto"
+                  : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+              )}
               animation="slideUp"
               staggerAmount={0.1}
               duration={0.4}
@@ -219,11 +240,16 @@ export default function ProjectsPage() {
                 <Card
                   key={project._id}
                   className={cn(
-                    "overflow-hidden bg-card/50 border-border hover:border-primary/50 pt-0",
-                    "transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
+                    isMusicTrack(project)
+                      ? "transition-all bg-muted/30 border-border hover:border-primary/50"
+                      : "overflow-hidden bg-card/50 border-border hover:border-primary/50 pt-0",
+                    !isMusicTrack(project) &&
+                      "transition-all duration-300 group hover:shadow-lg hover:shadow-primary/5"
                   )}
                 >
-                  <CardContent className="p-0">
+                  <CardContent
+                    className={isMusicTrack(project) ? "p-4" : "p-0"}
+                  >
                     {!isMusicTrack(project) && isVideoProject(project) ? (
                       <div
                         className="relative aspect-video cursor-pointer"
@@ -256,61 +282,36 @@ export default function ProjectsPage() {
                         </div>
                       </div>
                     ) : isMusicTrack(project) ? (
-                      <div
-                        className="relative aspect-square bg-muted/30 cursor-pointer overflow-hidden"
-                        onClick={() =>
-                          setSelectedAudio({
-                            id: project._id,
-                            title: project.title,
-                            audioSrc: project.audioUrl,
-                            coverArt: project.coverArt,
-                            category: project.category,
-                            duration: project.duration,
-                          })
-                        }
-                      >
-                        <Image
-                          src={project.coverArt || "/placeholder.svg"}
-                          alt={project.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          unoptimized={
-                            project.coverArt?.endsWith(".svg") ||
-                            project.coverArt?.includes("image/svg")
-                          }
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-70 group-hover:opacity-90 transition-opacity" />
-                        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="w-full md:w-3/8 flex items-center gap-5">
+                          <div className="h-12 w-12 relative rounded-full overflow-hidden">
+                            <Image
+                              src={project.coverArt || "/placeholder.svg"}
+                              alt={project.title}
+                              fill
+                              className="object-cover"
+                              unoptimized={
+                                project.coverArt?.endsWith(".svg") ||
+                                project.coverArt?.includes("image/svg")
+                              }
+                            />
+                          </div>
                           <div className="flex-1">
-                            <p className="text-xs text-white/80">
-                              {project.category}
-                            </p>
-                            <p className="text-sm text-white font-medium">
-                              {project.duration}
+                            <h3 className="font-medium">{project.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {project.category} • {project.duration}
                             </p>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-10 w-10 rounded-full bg-primary hover:!bg-primary text-primary-foreground"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedAudio({
-                                id: project._id,
-                                title: project.title,
-                                audioSrc: project.audioUrl,
-                                coverArt: project.coverArt,
-                                category: project.category,
-                                duration: project.duration,
-                              });
-                            }}
-                          >
-                            <Play className="h-4 w-4 ml-0.5" />
-                            <span className="sr-only">
-                              Play {project.title} audio
-                            </span>
-                          </Button>
+                        </div>
+                        <div className="w-full">
+                          <WavesurferPlayer
+                            audioSrc={project.audioUrl}
+                            height={50}
+                            barWidth={2}
+                            barGap={2}
+                            barRadius={3}
+                            playerId={`projects-${project._id}`}
+                          />
                         </div>
                       </div>
                     ) : (
@@ -318,21 +319,16 @@ export default function ProjectsPage() {
                         <Skeleton className="absolute inset-0" />
                       </div>
                     )}
-                    <div className="p-5">
-                      <h3 className="text-lg font-semibold mb-2">
-                        {project.title}
-                      </h3>
-                      <p className="text-muted-foreground text-sm line-clamp-2">
-                        {isMusicTrack(project) ? (
-                          <span className="flex items-center gap-1">
-                            <AudioLinesIcon className="h-3 w-3" />
-                            {project.category} • {project.duration}
-                          </span>
-                        ) : (
-                          project.description
-                        )}
-                      </p>
-                    </div>
+                    {!isMusicTrack(project) && (
+                      <div className="p-5">
+                        <h3 className="text-lg font-semibold mb-2">
+                          {project.title}
+                        </h3>
+                        <p className="text-muted-foreground text-sm line-clamp-2">
+                          {project.description}
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
